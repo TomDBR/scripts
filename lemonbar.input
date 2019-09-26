@@ -1,9 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
 . lemonbar.conf
-. ~/.bashrc
-#tray="%{A:stalonetray &:} trayhere"
+pauseSong() {
+	port="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep -v 8000)"
+	mpc -p "$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep -v 8000)" toggle
+}
 
+#tray="%{A:stalonetray &:} trayhere"
 
 while read -r line ; do
 	case $line in
@@ -12,6 +15,9 @@ while read -r line ; do
 			;;
 		V*)
 			volume="${line#?}"
+			;;
+		D*)
+			disk="${line#?}"
 			;;
 		M*)
 			music="${line#?}"
@@ -46,8 +52,7 @@ while read -r line ; do
 								#BG=$COLOR_FREE_BG
 								#UL=$BG
 								#;;
-							F*)
-								FG=$COLOR_FOCUSED_FREE_FG
+							F*) FG=$COLOR_FOCUSED_FREE_FG
 								BG=$COLOR_FOCUSED_FREE_BG
 								UL=$BG
 								;;
@@ -85,5 +90,5 @@ while read -r line ; do
 			esac
 			#echo "${wm}" >> ~/tmp.test
 			#printf "%s\n" "%{l}${wm}"
-			printf "%s\n" "%{l}${wm}  ${title}%{c}${clock}%{r}%{A:/home/Tom/Documents/Scripts/queryRemoteServer.sh mpc toggle :} ${music}%{A} | ${volume} | ${battery} | ${ethnet} ${wifi} |"
+			printf "%s\n" "%{l}${wm}  ${title}%{c}${clock}%{r}%{A:mpc -p "$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" toggle &>/dev/null:}${music}%{A} ${disk} |${volume} | ${ethnet} "
 done

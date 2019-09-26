@@ -1,0 +1,17 @@
+#!/bin/bash
+
+shopt -s expand_aliases
+alias mpc='mpc -p $(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)'
+
+
+if [[ "$@" == "prev" ]]; then
+	mpc prev
+elif [[ "$@" == "next" ]]; then
+	mpc next
+elif [[ "$@" == "stop" ]]; then
+	mpc stop
+elif [[ "$@" == "toggle" ]]; then
+	mpc toggle
+else
+	echo "invalid argument"
+fi

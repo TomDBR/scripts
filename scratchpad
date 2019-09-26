@@ -1,0 +1,43 @@
+#!/bin/sh
+windowName=$(echo $1)
+if [ -z "$windowName" ] 
+then
+	echo "scratch expects an argument" >> ~/temp
+else
+	echo "success! window name is: $windowName"
+	bspc query -N -n > /tmp/"$windowName".scratchid
+	while true
+	do 
+		if [ $(cat /tmp/"$windowName".scratchid 2>/dev/null | grep -e "0.*") ]
+		then
+			windowId=$(cat /tmp/"$windowName".scratchid 2>/dev/null)
+			echo "Done" >> /tmp/"$windowName".scratchid 
+			break
+		else
+			bspc query -N -n > /tmp/"$windowName".scratchid
+		fi
+	done
+	case "$windowName" in
+		"scratchpad")
+			if tmux ls &>/dev/null; then
+				tmux attach -t 0
+			else
+				$SHELL -c tmux
+			fi
+			;;
+		"trackma")
+			$SHELL -c trackma
+			;;
+		"ncmpcpp")
+			$SHELL -c ncmpcpp
+			;;
+		"youtube")
+			$SHELL -c 'ranger ~/Videos/Youtube/Subscriptions'
+			;;
+		*)
+			echo "Invalid windowName" >> ~/temp
+			;;
+	esac
+fi
+
+wait

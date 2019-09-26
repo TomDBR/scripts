@@ -1,15 +1,17 @@
 #!/bin/bash
+
 # Set colors for bar / tray
 bgcolor=$(xrdb -query | grep 'URxvt.background' | cut -d":" -f2 | tr -d "\t" | sed 's/\[[0-9][0-9]\]#/#da/')
 fgcolor=$(xrdb -query | grep 'URxvt.foreground' | cut -d":" -f2 | tr -d "\t")
 sed -i "s/^background.*/background \"#${bgcolor#???}\"/" ~/.stalonetrayrc
 
+. lemonbar.conf
+
 if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
-	printf "%s\n" "The panel is already running." >&2
+	printf "%s\\n" "The panel is already running." >&2
 	exit 1
 fi
 
-. ~/.bashrc
 
 trap 'trap - TERM; kill 0' INT TERM QUIT EXIT
 
@@ -26,11 +28,11 @@ trap 'rm "$Pipe"' INT TERM QUIT EXIT
 Volume() {
 	while true
 	do
-		controls=$(amixer get Master)
-		vol=$(echo "$controls" | grep -m 1 -oE '[0-9]{1,}%')
-		mute=$(echo "$controls" | grep -m 1 -oE '[a-z]{2,}\]$' | tr -d "]")
-		i=${vol::-1} # removes last character of string
-		if [[ "$mute" = 'on' ]]; then
+		controls=$(pactl list sinks)
+		vol=$(echo "$controls" | grep -e "Volume:" | grep -v "Base" | grep -oe "[0-9][0-9]*%" | head -n 1)
+		mute=$(echo "$controls" | grep "Mute" | tr -d "\t " | cut -d":" -f2)
+		i="${vol::-1}" # removes last character of string
+		if [[ "$mute" = 'yes' ]]; then
 			if [ $i -gt 50 ]; then
 				echo -e "V\\uf028 $vol"
 			elif [ $i -gt 0 ]; then
@@ -45,24 +47,148 @@ Volume() {
 	done
 }
 
-Music() {
+DiskUsage() {
 	while true
 	do
-		var=$(queryRemoteServer mpc)
-		status=""
-		if [ $(echo "$var" | wc -l) -gt 1 ]; then
-			musicStatus=$(echo "$var" | sed -n '2p' | grep -oE '\[.*\]')
-			if [ "$musicStatus" = '[playing]' ]; then
-				status=$(echo -e "\uf04b")
+		Mdot2Size="$(df | grep -e "/dev/nvme0n1p2" | sed "s/  */ /g")"
+		hddSize="$(df | grep -e "/dev/sd[a-z][0-9]" | sed "s/  */ /g")"
+		sizesTotal="$(echo "$hddSize" | cut -d" " -f2)"
+		sizesUsed="$(echo "$hddSize" | cut -d" " -f3)"
+		sizesAvail="$(echo "$hddSize" | cut -d" " -f4)"
+		sizeTotalArray=( $sizesTotal )
+		sizeUsedArray=( $sizesUsed )
+		sizeAvailArray=( $sizesAvail )
+		sumTotal="0"
+		sumUsed="0"
+		sumAvail="0"
+		(( lengthArray="${#sizeUsedArray[@]}" ))
+		(( i = 0 ))
+		while (( i < "$lengthArray" ))
+		do
+			sumTotal="$(echo "${sizeTotalArray[$i]} + $sumTotal" | bc)"
+			sumUsed="$(echo "${sizeUsedArray[$i]} + $sumUsed" | bc)"
+			sumAvail="$(echo "${sizeAvailArray[$i]} + $sumAvail" | bc)"
+			(( i++ ))
+		done
+		if (( ${#sumTotal} > 9 )); then
+			sumTotal="$(echo "scale=2; $sumTotal / 1024 / 1024 / 1024" | bc -l)TB"
+		elif (( ${#sumTotal} > 6 )); then
+			sumTotal="$(echo "scale=2; $sumTotal / 1024 / 1024" | bc -l)GB"
+		elif (( ${#sumTotal} > 3 )); then
+			sumTotal="$(echo "scale=2; $sumTotal / 1024" | bc -l)MB"
+		fi
+		if (( ${#sumUsed} > 9 )); then
+			sumUsed="$(echo "scale=2; $sumUsed / 1024 / 1024 / 1024" | bc -l)TB"
+		elif (( ${#sumUsed} > 6 )); then
+			sumUsed="$(echo "scale=2; $sumUsed / 1024 / 1024" | bc -l)GB"
+		elif (( ${#sumTotal} > 3 )); then
+			sumUsed="$(echo "scale=2; $sumUsed / 1024" | bc -l)MB"
+		fi
+		if (( ${#sumAvail} > 9 )); then
+			sumAvail="$(echo "scale=2; $sumAvail / 1024 / 1024 / 1024" | bc -l)TB"
+		elif (( ${#sumTotal} > 6 )); then
+			sumAvail="$(echo "scale=2; $sumAvail / 1024 / 1024" | bc -l)GB"
+		elif (( ${#sumTotal} > 3 )); then
+			sumAvail="$(echo "scale=2; $sumAvail / 1024" | bc -l)MB"
+		fi
+		echo  -e "D| ${sumUsed}/${sumTotal}; ${sumAvail} left"
+
+		sleep 300
+	done
+}
+
+
+Music() {
+	pgrep mpd &>/dev/null && mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" && var="$(mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+	curSong="/tmp/curSong.bar"
+	size=60
+	buffer="                                                                                             "
+	while true
+	do
+		while ! pgrep mpd &>/dev/null; do echo "M"; sleep 1; done
+		case "$var" in
+			"")
+				pgrep mpd && var="$(mpc -p $mpdport -f "%artist%;%title%" current)" 
+				;;
+			"mpd error"*)
+				mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" 
+				while [[ "$mpdport" == "" ]]; do
+					mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" 
+					sleep 0.5
+					if ! pgrep mpd; then var=""; break; fi
+				done
+				pgrep mpd && var="$(mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+				;;
+		esac
+		if ! [ "$var" == '' ]; then
+			artist="$(echo "$var" | sed -E 's/(.*)\;.*/\1/g')"
+			(( artistLen=${#artist})) ## length of artist on its own
+			title="$(echo "$var" | sed -E 's/.*\;(.*)/\1/g')"
+			(( titleLen=${#title})) ## length of title on its own
+			total="$artist - $title"
+			(( totalLen=${#total} )) ## length of artist and title with ' - ' separator inbetween
+			if (( totalLen > size )); then
+				## scrollingLen is the amount of characters that are out of view and have to be scrolled in
+				(( scrollingLen = totalLen - size ))
+				(( i=0 ))
+				(( delay=0 )) # Used to prevent text from scrolling out of sight right away, improves readability
+				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+				pidmpc=$!
+				set -x
+				while kill -0 $pidmpc 2> /dev/null
+				do
+					#if the artistlength is greater than the title, scroll the whole thing
+					if (( artistLen > titleLen )); then 
+						if (( i <= scrollingLen )); then
+							musicInfo="${total:$i:$size}"
+							if (( delay > 8 )); then (( i++ )); else (( delay++ )); fi
+						else
+							musicInfo="${total:$i}${buffer:0:((i - scrollingLen))}"
+							(( i++ ))
+							if (( i > totalLen )); then
+								(( i=0 ))
+								(( delay=0 ))
+							fi
+						fi
+						echo -e "M| $musicInfo"
+					#else scroll just the title, artist stays static
+					else 
+						if (( i <= scrollingLen )); then
+							musicTitlePart="${title:$i:((size - artistLen - 3))}"
+							if (( delay > 8 )); then (( i++ )); else (( delay++ )); fi
+						else
+							musicTitlePart="${title:$i}${buffer:0:((i - scrollingLen))}"
+							(( i++ ))
+							if (( i > ( totalLen - artistLen - 3 ) )); then
+								(( i=0 ))
+								(( delay=0 ))
+							fi
+						fi
+						echo -e "M| $artist - $musicTitlePart"
+					fi
+					sleep 0.3
+				done
+				var="$(cat $curSong)"
 			else
-				status=$(echo -e "\uf04c")
+				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 &
+				pidmpc=$!
+				echo -e "M| $artist - $title"
+				while kill -0 $pidmpc 2> /dev/null
+				do
+					wait
+				done
+				var="$(cat $curSong)"
 			fi
-			musicTitle=$(echo "$var" | sed -n '1p')
-			echo -e "M\uf001 $musicTitle $status\n"
 		else
 			echo "M"
+			mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+			pidmpc=$!
+			while kill -0 $pidmpc 2> /dev/null
+			do
+				wait
+			done
+			var="$(cat $curSong)"
 		fi
-		sleep 1
 	done
 }
 
@@ -90,11 +216,11 @@ Battery() {
 Ethernet() {
 	while true
 	do
-		ETH=$(ip -4 addr | grep en0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
+		ETH=$(ip -4 addr | grep enp6s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
 		if [ -z "$ETH" ]; then
-			echo -e "IEth: NULL\n"
+			echo -e "IEth: NULL\\n"
 		else
-			echo -e "IEth: $ETH\n"
+			echo -e "IEth: $ETH\\n"
 		fi
 		sleep 10
 	done
@@ -105,38 +231,34 @@ Wifi() {
 	do
 		WIFI=$(ip -4 addr | grep wlp3s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
 		if [ -z "$WIFI" ]; then
-			echo -e "X\uf1eb NULL"
+			echo -e "X\\uf1eb NULL"
 		else
-			echo -e "X\uf1eb $WIFI"
+			echo -e "X\\uf1eb $WIFI"
 		fi
 		sleep 10
 	done
 }
 
-xtitle -t 50 -sf "T%s\n" > "$Pipe" &
+xtitle -t 70 -sf "T%s\n" > "$Pipe" &
 Clock > "$Pipe" &
-Battery > "$Pipe" &
+#Battery > "$Pipe" &
 Volume > "$Pipe" &
-#Ethernet > "$Pipe" &
+Ethernet > "$Pipe" &
+DiskUsage > "$Pipe" &
 Wifi > "$Pipe" &
 Music > "$Pipe" &
 bspc subscribe report > "$Pipe" &
 
-. lemonbar.conf
 
-#lemonbar.input < "$Pipe" | lemonbar -f "FontAwesome:pixelsize=11" -f "-misc-ohsnapu-medium-r-normal--14-101-100-100-c-70-iso10646-1" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
-lemonbar.input < "$Pipe" | lemonbar -f "FontAwesome:pixelsize=11" -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
-#lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "FontAwesome:pixelsize=11" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=14" -f "Font Awesome 5 Free:style=Regular" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=14" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1800x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+#lemonbar.input < "$Pipe" | lemonbar -f "-misc-hanamina-medium-r-normal--0-0-0-0-p-0-ascii-0" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
 
 stalonetray &
-sleep 0.5 && transset-df -i $(xwininfo -name 'stalonetray' | grep -oE "0x[0-9,a-Z]{3,}" | head -n 1) 0.85 &>/dev/null
-nm-applet &
-blueman-applet &
-fcitx &
+sleep 0.5 && transset-df -i $(xwininfo -name 'stalonetray' | grep -oE "0x[0-9,a-Z]{3,}" | head -n 1) 0.85 & >/dev/null
+#nm-applet &
 trap 'pkill stalonetray' INT TERM QUIT EXIT
-#trap 'pkill nm-applet' EXIT
+#trap 'pkill nm-applet' INT TERM QUIT EXIT
 
-sleep 0.5
 wid=$(xdo id -m -a "$PANEL_WM_NAME")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
 wid=$(xdo id -m -a "stalonetray")

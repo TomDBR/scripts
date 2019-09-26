@@ -1,0 +1,20 @@
+#!/bin/bash
+
+cmd="$@"
+vol="$(pactl list sinks | grep -e "Volume:" | grep -v "Base" | grep -oe "[0-9][0-9]*%" | head -n 1)"
+echo "$vol"
+
+if [[ "$cmd" = "toggle" ]]
+then
+	pactl set-sink-mute 0 toggle
+elif [[ "$cmd" = "down" ]]
+then
+	pactl set-sink-volume 0 -5%
+elif [[ "$cmd" = "up" ]]
+then
+	if (( ${vol::-1} > 95 )); then
+		pactl set-sink-volume 0 +$(( 100 - ${vol::-1} ))%
+	else
+		pactl set-sink-volume 0 +5%
+	fi
+fi
