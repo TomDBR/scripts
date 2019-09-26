@@ -1,0 +1,20 @@
+#!/bin/sh
+
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+LAST_COMMIT=$(git rev-list -1 HEAD)
+
+echo Automatically merging commit $LAST_COMMIT from $CURRENT_BRANCH
+
+case $CURRENT_BRANCH in
+laptop)
+  git checkout desktop && git cherry-pick $LAST_COMMIT
+  git checkout master && git cherry-pick $LAST_COMMIT
+  git checkout $CURRENT_BRANCH
+  ;;
+desktop)
+  git checkout laptop && git cherry-pick $LAST_COMMIT
+  git checkout master && git cherry-pick $LAST_COMMIT
+  git checkout $CURRENT_BRANCH
+  ;;
+esac
