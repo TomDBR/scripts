@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if bspc query -N -n
+then
+	notify-send YEAH
+else
+	notify-send NO
+fi

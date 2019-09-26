@@ -1,0 +1,3 @@
+#!/bin/bash
+if (( $# != 1 )); then echo "One argument required!"; exit 1; fi
+highlight --force -O xterm256 "$@" | less -R

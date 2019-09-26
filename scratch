@@ -1,0 +1,45 @@
+#!/bin/bash
+windowName="$1"
+
+if [ -z "$windowName" ] 
+then
+	echo "scratch expects an argument" >> ~/temp
+else
+	bspc query -N -n > /tmp/"$windowName".scratchid
+	while true
+	do 
+		if [ $(cat /tmp/"$windowName".scratchid 2>/dev/null | grep -e "0.*") ]
+		then
+			windowId=$(cat /tmp/"$windowName".scratchid 2>/dev/null)
+			echo "Done" >> /tmp/"$windowName".scratchid
+			break
+		else
+			bspc query -N -n > /tmp/"$windowName".scratchid
+		fi
+	done
+	case "$windowName" in
+		"scratch")
+			if tmux ls | grep scratch &>/dev/null; then
+				tmux attach -t scratch
+			else
+				$SHELL -c 'tmux new-session -s scratch'
+			fi
+			;;
+		"trackma")
+			$SHELL -c trackma
+			;;
+		"desktop")
+			$SHELL 
+			;;
+		"files")
+			if tmux ls | grep files &>/dev/null; then
+				tmux attach -t files
+			else
+				$SHELL -c 'tmux new-session -s files lf'
+			fi
+			;;
+		*)
+			notify-send "Invalid windowName"
+			;;
+	esac
+fi

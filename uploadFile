@@ -1,0 +1,5 @@
+#!/bin/bash
+
+file="$@"
+
+curl -F"file=@$file" https://0x0.st | tee >(xclip -sel c)

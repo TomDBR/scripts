@@ -1,0 +1,5 @@
+#!/bin/bash
+if (( $# < 1 )); then echo "At least one argument required!11!1!1"; exit 1; fi
+
+arguments="$@"
+nohup mpv --ytdl-raw-options=default-search=ytsearch ytdl://"$arguments" &>/dev/null &

@@ -1,0 +1,49 @@
+#!/bin/bash
+if (( $# != 1 )); then echo "ONE ARGUMENT IS REQUIRED!!1!11!"; exit 1; fi
+imageExtensions="png jpg jpeg jpe jp2"
+vidExtensions="mkv mp4 webm gif"
+audioExtensions="mp3 flac opus"
+docExtensions="pdf djvu epub"
+
+url="$1"
+
+#extension="$(echo ${url} | sed -E "s/.*\.([a-zA-Z0-9]{1,5})$/\1/")"
+extension="$(echo "$url" | sed -E "s/http\:\/\/.*\.([A-Za-z0-9]{1,})[?]*.*$/\1/")"
+mimetypes="$(curl -sI $url | grep -i "content-type:" | cut -d" " -f2-)"
+
+echo -e "URL is: $url\nMimeTypes are: $mimetypes\nExtension is $extension"
+
+processImage() {
+	curl -s --output - "$url" > /tmp/.image
+	nohup sxiv /tmp/.image &>/dev/null &
+}
+
+processVideo() {
+	nohup mpv --ytdl-raw-options=--add-metadata "$url" &>/dev/null &
+}
+
+processAudio() {
+	nohup mpv --audio-display=attachment --force-window --geometry=640x480 --profile=low-latency "$url" &>/dev/null &
+}
+processDocument() {
+	curl -s --output - "$url" > /tmp/.document
+	nohup zathura /tmp/.image &>/dev/null &
+}
+if echo "$url" | grep -E "youtube\.com/watch|youtu\.be/[a-Z0-9]{11,}" >/dev/null; then 
+	nohup mpv --ytdl-raw-options=add-metadata= "$url" &>/dev/null &
+elif [[ "$extension" == "$url" ]]; then
+	# check mimetypes since there's no usable extension to go by
+	if echo "$mimetypes"   | grep "image" &>/dev/null; then processImage
+	elif echo "$mimetypes" | grep "video" &>/dev/null; then processVideo
+	elif echo "$mimetypes" | grep "audio" &>/dev/null; then processAudio
+	elif echo "$mimetypes" | grep "pdf"   &>/dev/null; then processDocument
+	else nohup qutebrowser "$url" &>/dev/null
+	fi
+else
+	if echo "$imageExtensions" | grep -w "$extension" &>/dev/null; then processImage
+	elif echo "$vidExtensions" | grep -w "$extension" &>/dev/null; then processVideo
+	elif echo "$audioExtensions" | grep -w "$extension" &>/dev/null; then processAudio
+	elif echo "$docExtensions" | grep -w "$extension" &>/dev/null; then processDocument
+	else nohup qutebrowser "$url" &>/dev/null
+	fi
+fi

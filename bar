@@ -1,0 +1,145 @@
+#!/bin/bash
+# Set colors for bar / tray
+bgcolor=$(xrdb -query | grep 'URxvt.background' | cut -d":" -f2 | tr -d "\t" | sed 's/\[[0-9][0-9]\]#/#da/')
+fgcolor=$(xrdb -query | grep 'URxvt.foreground' | cut -d":" -f2 | tr -d "\t")
+sed -i "s/^background.*/background \"#${bgcolor#???}\"/" ~/.stalonetrayrc
+
+if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
+	printf "%s\n" "The panel is already running." >&2
+	exit 1
+fi
+
+. ~/.bashrc
+
+trap 'trap - TERM; kill 0' INT TERM QUIT EXIT
+
+# Make a named pipe to send all output from this script to
+
+Pipe="/tmp/mybar.info"
+[ -e "$Pipe" ] && rm "$Pipe"
+mkfifo "$Pipe"
+
+trap 'rm "$Pipe"' INT TERM QUIT EXIT
+
+
+
+Volume() {
+	while true
+	do
+		controls=$(amixer get Master)
+		vol=$(echo "$controls" | grep -m 1 -oE '[0-9]{1,}%')
+		mute=$(echo "$controls" | grep -m 1 -oE '[a-z]{2,}\]$' | tr -d "]")
+		i=${vol::-1} # removes last character of string
+		if [[ "$mute" = 'on' ]]; then
+			if [ $i -gt 50 ]; then
+				echo -e "V\\uf028 $vol"
+			elif [ $i -gt 0 ]; then
+				echo -e "V\\uf027 $vol"
+			else
+				echo -e "V\\uf026 $vol"
+			fi
+		else
+			echo -e "V\\uf2e2 $vol"
+		fi
+		sleep 1
+	done
+}
+
+Music() {
+	while true
+	do
+		var=$(queryRemoteServer mpc)
+		status=""
+		if [ $(echo "$var" | wc -l) -gt 1 ]; then
+			musicStatus=$(echo "$var" | sed -n '2p' | grep -oE '\[.*\]')
+			if [ "$musicStatus" = '[playing]' ]; then
+				status=$(echo -e "\uf04b")
+			else
+				status=$(echo -e "\uf04c")
+			fi
+			musicTitle=$(echo "$var" | sed -n '1p')
+			echo -e "M\uf001 $musicTitle $status\n"
+		else
+			echo "M"
+		fi
+		sleep 1
+	done
+}
+
+# Define the clock
+Clock() {
+	while true
+	do
+        	DATETIME=$(date "+%a %d/%m - %H:%M")
+        	#echo -e "S\\uf073 ${DATETIME}\n"
+        	echo -e "S${DATETIME}\n"
+		sleep 60
+	done
+}
+
+Battery() {
+	while true
+	do
+		BATPRC=$(acpi --battery | cut -d" " -f4 | tr -d ",")
+		#BATETA=$(acpi --battery | cut -d" " -f5)
+		echo -e "B\\uf242 $BATPRC\n"
+		sleep 30
+	done
+}
+
+Ethernet() {
+	while true
+	do
+		ETH=$(ip -4 addr | grep en0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
+		if [ -z "$ETH" ]; then
+			echo -e "IEth: NULL\n"
+		else
+			echo -e "IEth: $ETH\n"
+		fi
+		sleep 10
+	done
+}
+
+Wifi() {
+	while true
+	do
+		WIFI=$(ip -4 addr | grep wlp3s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
+		if [ -z "$WIFI" ]; then
+			echo -e "X\uf1eb NULL"
+		else
+			echo -e "X\uf1eb $WIFI"
+		fi
+		sleep 10
+	done
+}
+
+xtitle -t 50 -sf "T%s\n" > "$Pipe" &
+Clock > "$Pipe" &
+Battery > "$Pipe" &
+Volume > "$Pipe" &
+#Ethernet > "$Pipe" &
+Wifi > "$Pipe" &
+Music > "$Pipe" &
+bspc subscribe report > "$Pipe" &
+
+. lemonbar.conf
+
+#lemonbar.input < "$Pipe" | lemonbar -f "FontAwesome:pixelsize=11" -f "-misc-ohsnapu-medium-r-normal--14-101-100-100-c-70-iso10646-1" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+lemonbar.input < "$Pipe" | lemonbar -f "FontAwesome:pixelsize=11" -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+#lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "FontAwesome:pixelsize=11" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+
+stalonetray &
+sleep 0.5 && transset-df -i $(xwininfo -name 'stalonetray' | grep -oE "0x[0-9,a-Z]{3,}" | head -n 1) 0.85 &>/dev/null
+nm-applet &
+blueman-applet &
+fcitx &
+trap 'pkill stalonetray' INT TERM QUIT EXIT
+#trap 'pkill nm-applet' EXIT
+
+sleep 0.5
+wid=$(xdo id -m -a "$PANEL_WM_NAME")
+xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
+wid=$(xdo id -m -a "stalonetray")
+xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
+
+wait
