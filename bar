@@ -11,7 +11,7 @@ if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
 	printf "%s\\n" "The panel is already running." >&2
 	exit 1
 fi
-
+. ~/.bashrc
 
 trap 'trap - TERM; kill 0' INT TERM QUIT EXIT
 
@@ -50,7 +50,6 @@ Volume() {
 DiskUsage() {
 	while true
 	do
-		Mdot2Size="$(df | grep -e "/dev/nvme0n1p2" | sed "s/  */ /g")"
 		hddSize="$(df | grep -e "/dev/sd[a-z][0-9]" | sed "s/  */ /g")"
 		sizesTotal="$(echo "$hddSize" | cut -d" " -f2)"
 		sizesUsed="$(echo "$hddSize" | cut -d" " -f3)"
@@ -99,25 +98,19 @@ DiskUsage() {
 
 
 Music() {
-	pgrep mpd &>/dev/null && mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" && var="$(mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+	var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
 	curSong="/tmp/curSong.bar"
 	size=60
 	buffer="                                                                                             "
 	while true
 	do
-		while ! pgrep mpd &>/dev/null; do echo "M"; sleep 1; done
+		while [[ $(queryRemoteServer mpc -f "%artist%:%title%" current | wc -l) -eq 0 ]]; do echo "M"; sleep 1; done
 		case "$var" in
 			"")
-				pgrep mpd && var="$(mpc -p $mpdport -f "%artist%;%title%" current)" 
+				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
 				;;
 			"mpd error"*)
-				mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" 
-				while [[ "$mpdport" == "" ]]; do
-					mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" 
-					sleep 0.5
-					if ! pgrep mpd; then var=""; break; fi
-				done
-				pgrep mpd && var="$(mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+				var="$(queryRemoteServer mpc -p "$mpdport" -f "%artist%;%title%" current)" 
 				;;
 		esac
 		if ! [ "$var" == '' ]; then
@@ -132,7 +125,7 @@ Music() {
 				(( scrollingLen = totalLen - size ))
 				(( i=0 ))
 				(( delay=0 )) # Used to prevent text from scrolling out of sight right away, improves readability
-				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+				queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 				pidmpc=$!
 				set -x
 				while kill -0 $pidmpc 2> /dev/null
@@ -170,7 +163,7 @@ Music() {
 				done
 				var="$(cat $curSong)"
 			else
-				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 &
+				queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 &
 				pidmpc=$!
 				echo -e "M| $artist - $title"
 				while kill -0 $pidmpc 2> /dev/null
@@ -181,7 +174,7 @@ Music() {
 			fi
 		else
 			echo "M"
-			mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+			queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 			pidmpc=$!
 			while kill -0 $pidmpc 2> /dev/null
 			do
@@ -216,7 +209,7 @@ Battery() {
 Ethernet() {
 	while true
 	do
-		ETH=$(ip -4 addr | grep enp6s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
+		ETH=$(ip -4 addr | grep enp4s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
 		if [ -z "$ETH" ]; then
 			echo -e "IEth: NULL\\n"
 		else
@@ -239,23 +232,27 @@ Wifi() {
 	done
 }
 
-xtitle -t 70 -sf "T%s\n" > "$Pipe" &
+xtitle -t 50 -sf "T%s\n" > "$Pipe" &
 Clock > "$Pipe" &
-#Battery > "$Pipe" &
+Battery > "$Pipe" &
 Volume > "$Pipe" &
-Ethernet > "$Pipe" &
+#Ethernet > "$Pipe" &
 DiskUsage > "$Pipe" &
 Wifi > "$Pipe" &
 Music > "$Pipe" &
 bspc subscribe report > "$Pipe" &
 
 
-lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=14" -f "Font Awesome 5 Free:style=Regular" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=14" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1800x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+#lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "FontAwesome:pixelsize=11" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=14" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+lemonbar.input < "$Pipe" | lemonbar -f "FontAwesome:pixelsize=11" -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+
 #lemonbar.input < "$Pipe" | lemonbar -f "-misc-hanamina-medium-r-normal--0-0-0-0-p-0-ascii-0" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
 
 stalonetray &
 sleep 0.5 && transset-df -i $(xwininfo -name 'stalonetray' | grep -oE "0x[0-9,a-Z]{3,}" | head -n 1) 0.85 & >/dev/null
-#nm-applet &
+nm-applet &
+blueman-applet &
+fcitx &
 trap 'pkill stalonetray' INT TERM QUIT EXIT
 #trap 'pkill nm-applet' INT TERM QUIT EXIT
 
