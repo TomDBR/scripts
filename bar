@@ -99,7 +99,7 @@ DiskUsage() {
 
 
 Music() {
-	pgrep mpd &>/dev/null && mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" && var="$(mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+	pgrep mpd &>/dev/null && mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" && var="$(mpc -h localhost -p "$mpdport" -f "%artist%;%title%" current)" 
 	curSong="/tmp/curSong.bar"
 	size=60
 	buffer="                                                                                             "
@@ -108,7 +108,7 @@ Music() {
 		while ! pgrep mpd &>/dev/null; do echo "M"; sleep 1; done
 		case "$var" in
 			"")
-				pgrep mpd && var="$(mpc -p $mpdport -f "%artist%;%title%" current)" 
+				pgrep mpd && var="$(mpc -h localhost -p $mpdport -f "%artist%;%title%" current)" 
 				;;
 			"mpd error"*)
 				mpdport="$(ss -tulpn | grep mpd | cut -d":" -f2 | cut -d" " -f1 | grep 66)" 
@@ -117,7 +117,7 @@ Music() {
 					sleep 0.5
 					if ! pgrep mpd; then var=""; break; fi
 				done
-				pgrep mpd && var="$(mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+				pgrep mpd && var="$(mpc -h localhost -p "$mpdport" -f "%artist%;%title%" current)" 
 				;;
 		esac
 		if ! [ "$var" == '' ]; then
@@ -132,7 +132,7 @@ Music() {
 				(( scrollingLen = totalLen - size ))
 				(( i=0 ))
 				(( delay=0 )) # Used to prevent text from scrolling out of sight right away, improves readability
-				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+				mpc -h localhost -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 				pidmpc=$!
 				while kill -0 $pidmpc 2> /dev/null
 				do
@@ -169,7 +169,7 @@ Music() {
 				done
 				var="$(cat $curSong)"
 			else
-				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 &
+				mpc -h localhost -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 &
 				pidmpc=$!
 				echo -e "M| $artist - $title"
 				while kill -0 $pidmpc 2> /dev/null
@@ -180,7 +180,7 @@ Music() {
 			fi
 		else
 			echo "M"
-			mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+			mpc -h localhost -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 			pidmpc=$!
 			while kill -0 $pidmpc 2> /dev/null
 			do
