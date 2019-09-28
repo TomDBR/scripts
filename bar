@@ -245,6 +245,7 @@ Wifi > "$Pipe" &
 Music > "$Pipe" &
 bspc subscribe report > "$Pipe" &
 
+#lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=14" -f "Font Awesome 5 Free:style=Regular" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=14" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1800x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
 lemonbar.input < "$Pipe" | lemonbar -f "Font Awesome 5 Free Solid:pixelsize=11" -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
 
 stalonetray &
