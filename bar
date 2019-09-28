@@ -142,7 +142,7 @@ Music() {
 								(( delay=0 ))
 							fi
 						fi
-						echo -e "M| $musicInfo"
+						echo -e "M| \\uf001 $musicInfo"
 					#else scroll just the title, artist stays static
 					else 
 						if (( i <= scrollingLen )); then
@@ -156,7 +156,7 @@ Music() {
 								(( delay=0 ))
 							fi
 						fi
-						echo -e "M| $artist - $musicTitlePart"
+						echo -e "M| \\uf001 $artist - $musicTitlePart"
 					fi
 					sleep 0.3
 				done
@@ -164,7 +164,7 @@ Music() {
 			else
 				queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 &
 				pidmpc=$!
-				echo -e "M| $artist - $title"
+				echo -e "M| \\uf001 $artist - $title"
 				while kill -0 $pidmpc 2> /dev/null
 				do
 					wait
