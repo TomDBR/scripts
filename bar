@@ -30,9 +30,9 @@ Volume() {
 	do
 		controls=$(pactl list sinks)
 		vol=$(echo "$controls" | grep -e "Volume:" | grep -v "Base" | grep -oe "[0-9][0-9]*%" | head -n 1)
-		mute=$(echo "$controls" | grep "Mute" | tr -d "\t " | cut -d":" -f2)
+		mute=$(echo "$controls" | grep "Mute" | tr -d "\t " | cut -d":" -f2 | head -n 1)
 		i="${vol::-1}" # removes last character of string
-		if [[ "$mute" = 'yes' ]]; then
+		if [[ "$mute" = 'no' ]]; then
 			if [ $i -gt 50 ]; then
 				echo -e "V\\uf028 $vol"
 			elif [ $i -gt 0 ]; then
@@ -41,7 +41,7 @@ Volume() {
 				echo -e "V\\uf026 $vol"
 			fi
 		else
-			echo -e "V\\uf2e2 $vol"
+			echo -e "V\uf6a9 $vol\n"
 		fi
 		sleep 1
 	done
@@ -91,7 +91,7 @@ DiskUsage() {
 		elif (( ${#sumTotal} > 3 )); then
 			sumAvail="$(echo "scale=2; $sumAvail / 1024" | bc -l)MB"
 		fi
-		echo  -e "D| ${sumUsed}/${sumTotal}; ${sumAvail} left"
+		echo  -e "D| \\uf0c7 ${sumUsed}/${sumTotal}; ${sumAvail} left"
 
 		sleep 300
 	done
@@ -134,7 +134,6 @@ Music() {
 				(( delay=0 )) # Used to prevent text from scrolling out of sight right away, improves readability
 				mpc -p "$mpdport" -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 				pidmpc=$!
-				set -x
 				while kill -0 $pidmpc 2> /dev/null
 				do
 					#if the artistlength is greater than the title, scroll the whole thing
@@ -208,6 +207,11 @@ Battery() {
 	do
 		BATPRC=$(acpi --battery | cut -d" " -f4 | tr -d ",")
 		#BATETA=$(acpi --battery | cut -d" " -f5)
+		if   (( ${BATPRC::-1} > 90 )); then echo -e "B\\uf240 $BATPRC\n"
+		elif (( ${BATPRC::-1} > 70 )); then echo -e "B\\uf241 $BATPRC\n"
+		elif (( ${BATPRC::-1} > 40 )); then echo -e "B\\uf242 $BATPRC\n"
+		elif (( ${BATPRC::-1} > 10 )); then echo -e "B\\uf243 $BATPRC\n"
+		else echo -e "B\\uf244 $BATPRC\n"; fi
 		echo -e "B\\uf242 $BATPRC\n"
 		sleep 30
 	done
@@ -249,9 +253,8 @@ Wifi > "$Pipe" &
 Music > "$Pipe" &
 bspc subscribe report > "$Pipe" &
 
-
-lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=14" -f "Font Awesome 5 Free:style=Regular" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=14" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1800x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
-#lemonbar.input < "$Pipe" | lemonbar -f "-misc-hanamina-medium-r-normal--0-0-0-0-p-0-ascii-0" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1880x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+#lemonbar.input < "$Pipe" | lemonbar -f "Misc Ohsnapu:pixelsize=14" -f "Font Awesome 5 Free:style=Regular" -f "PT Mono:style=Regular:pixelsize=13" -f "osaka_unicode:style=Regular:pixelsize=14" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1800x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+lemonbar.input < "$Pipe" | lemonbar -f "Font Awesome 5 Free Solid:pixelsize=11" -f "Misc Ohsnapu:pixelsize=13:antialias=false" -f "osaka_unicode:style=Regular:pixelsize=13" -a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
 
 stalonetray &
 sleep 0.5 && transset-df -i $(xwininfo -name 'stalonetray' | grep -oE "0x[0-9,a-Z]{3,}" | head -n 1) 0.85 & >/dev/null
