@@ -90,7 +90,8 @@ DiskUsage() {
 		elif (( ${#sumTotal} > 3 )); then
 			sumAvail="$(echo "scale=2; $sumAvail / 1024" | bc -l)MB"
 		fi
-		echo  -e "D| \\uf0c7 ${sumUsed}/${sumTotal}; ${sumAvail} left"
+		#echo  -e "D| \\uf0c7 ${sumUsed}/${sumTotal}; ${sumAvail} left"
+		echo  -e "D| \\uf0c7 ${sumAvail} free"
 
 		sleep 300
 	done
