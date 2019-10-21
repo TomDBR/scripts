@@ -8,7 +8,7 @@ docExtensions="pdf djvu epub"
 url="$1"
 
 #extension="$(echo ${url} | sed -E "s/.*\.([a-zA-Z0-9]{1,5})$/\1/")"
-extension="$(echo "$url" | sed -E "s/http\:\/\/.*\.([A-Za-z0-9]{1,})[?]*.*$/\1/")"
+extension="$(echo "$url" | sed -E "s/http.*\:\/\/.*\.([A-Za-z0-9]{1,})[?]*.*$/\1/")"
 mimetypes="$(curl -sI $url | grep -i "content-type:" | cut -d" " -f2-)"
 
 echo -e "URL is: $url\nMimeTypes are: $mimetypes\nExtension is $extension"
