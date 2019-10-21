@@ -110,7 +110,13 @@ Music() {
 				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
 				;;
 			"mpd error"*)
-				var="$(queryRemoteServer mpc -p "$mpdport" -f "%artist%;%title%" current)" 
+				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
+				;;
+			"not connected to"*)
+				sleep 5
+				;;
+			"Terminated"*)
+				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
 				;;
 		esac
 		if ! [ "$var" == '' ]; then
