@@ -1,0 +1,54 @@
+#!/bin/bash
+
+curDir=$(pwd)
+feed="$(echo "$1/" | sed 's/\/\/$/\//')"
+dir="/srv/http/rss/$feed"
+echo "Working directory is $dir"
+
+function createNewFeed() {
+	mkdir "$dir"
+	cd "$dir"
+	mkdir videos
+	cp ../emptyFeed.rss feed.rss
+	echo "Please give the channel's url"
+	while read url
+	do
+		if $(echo "$url" | grep "http.*://.*" &>/dev/null); then
+			break
+		else
+			echo "Invalid url, please give a valid url"
+		fi
+	done
+
+	echo "$url" > url
+	sed -i "s/{title}/${feed::-1}/;s|{link}|$url|;s/{language}/English/" feed.rss
+	vim feed.rss
+	downloadExistingFeed
+}
+
+function downloadExistingFeed() {
+	cd "$dir"
+	url="$(cat ./url)"
+	declare -a links=( $(youtube-dl -s --get-id --max-downloads 4 "$url" ) )
+	for link in "${links[@]}"; do
+		populateRssTemplate https://youtu.be/$link /srv/http/rss/rss_item_template.xml ${dir}feed.rss
+	done
+}
+
+if [[ -d "$dir" ]]; then
+	downloadExistingFeed
+else
+	echo "Feed doesn't exist, do you wanna create it? [Y/n]"
+	while read input
+	do
+		case "$input" in
+			"Y"*|"y"*) createNewFeed; break; ;;
+			"N"*|"n"*) break; exit 1 ;;
+			*) echo -e "Invalid input! \nDo you wanna create the feed? [Y/n]\n"; ;;
+		esac
+	done
+fi
+
+echo "Exiting..."
+cd $curDir
+

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+url="$1"
+id="$(echo $url | sed -E 's|^.*/(.*)$|\1|')"
+templateFile="$2"
+rssFeed="$3"
+
+if ! grep -e "$id" $(pwd)/.archive.txt
+then
+	formattedTitleUploaderDateString="$(youtube-dl -o '%(title)s;%(uploader)s;%(upload_date)s;%(timestamp)s' --get-filename "$url")"
+	youtube-dl -x --ignore-config --download-archive "$(pwd)"/.archive.txt -o './videos/%(title)s.%(ext)s' "$url"
+
+	title="$(echo $formattedTitleUploaderDateString | cut -d";" -f1)"
+	author="$(echo $formattedTitleUploaderDateString | cut -d";" -f2)"
+	timeStamp="$(echo $formattedTitleUploaderDateString | cut -d";" -f4)"
+	pubDate="$(date -d "$(echo $formattedTitleUploaderDateString | cut -d";" -f3)" '+%a, %d %b %Y %R:%S +0000')"
+	fileName="$(ls ./videos | grep "$title" | sed 's/ /%20/g')"
+	link="$(echo "http://$(pwd)/videos/$fileName" | sed 's|/srv/http|Arch|')"
+	#echo "title is $title, author is $author, pubDate is $pubDate, fileName $fileName, link $link"
+
+	if ! [[ $timeStamp == "NA" ]]; then
+		DISPLAY=:0 notify-send "THERE WAS AN ACTUAL TIMESTAMP: $timestamp"
+	fi
+
+	printf -v escaped "%q\n" "$(youtube-dl --get-description "$url")"
+	description="$(echo $escaped | sed -e 's/^..//;s/.$//')"
+	template="$(cat "$templateFile" | sed "s/{title}/$title/;s/{author}/$author/;s/{guid}/$id/;s|{link}|$link|;s/{pubDate}/$pubDate/;s|{description}|$description|")"
+	printf -v escaped "%q\n\n" "$template"
+	escapedTemplate="$(echo $escaped | sed -e 's/^..//;s/.$//')"
+	sed -i "s|<\!-- {{ next }} -->|$escapedTemplate \n  <\!-- {{ next }} -->|" "$rssFeed"
+	sed -i "s/<lastBuildDate>.*<\/lastBuildDate>/<lastBuildDate>$(date '+%a, %d %b %Y %R:%S +0000')<\/lastBuildDate>/" "$rssFeed"
+	xmllint --format --output "$rssFeed" "$rssFeed"
+
+else
+	echo "File already downloaded, skipping..."
+fi
