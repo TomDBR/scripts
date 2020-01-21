@@ -19,8 +19,6 @@ do
 	x="${xArgSizes[i]}"
 	y="${yArgSizes[i]}"
 	urxvtc -name "$window" -e bash -c "scratch $window"
-	until [[ $(sed -n '2p' /tmp/$window.scratchid) == 'Done' ]]; do sleep 0.1; done; 
-	sed -i '2d' /tmp/"$window".scratchid
-	bspc node "$(cat /tmp/$window.scratchid)" --flag sticky --flag hidden --state floating 
-	bspc node "$(cat /tmp/$window.scratchid)" -z bottom_left $x $y
+	bspc node "$(xdo id -N URxvt -n $window)" --flag sticky --flag hidden --state floating 
+	bspc node "$(xdo id -N URxvt -n $window)" -z bottom_left $x $y
 done
