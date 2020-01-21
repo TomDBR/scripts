@@ -5,18 +5,6 @@ if [ -z "$windowName" ]
 then
 	echo "scratch expects an argument" >> ~/temp
 else
-	bspc query -N -n > /tmp/"$windowName".scratchid
-	while true
-	do 
-		if [ $(cat /tmp/"$windowName".scratchid 2>/dev/null | grep -e "0.*") ]
-		then
-			windowId=$(cat /tmp/"$windowName".scratchid 2>/dev/null)
-			echo "Done" >> /tmp/"$windowName".scratchid
-			break
-		else
-			bspc query -N -n > /tmp/"$windowName".scratchid
-		fi
-	done
 	case "$windowName" in
 		"scratch")
 			if tmux ls | grep scratch &>/dev/null; then
