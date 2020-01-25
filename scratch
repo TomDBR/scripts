@@ -10,7 +10,11 @@ else
 			if tmux ls | grep scratch &>/dev/null; then
 				tmux attach -t scratch
 			else
-				$SHELL -c 'tmux new-session -s scratch'
+				tmux new-session -d -s scratch 'gomuks; bash'
+				tmux new-window -d -n MUSIC -t scratch: 'queryRemoteServer.sh ncmpcpp'
+				tmux new-window -d -n CAL -t scratch: 'calcurse; bash'
+				tmux new-window -d -t scratch:
+				tmux -2 attach-session -t scratch
 			fi
 			;;
 		"trackma")
@@ -23,7 +27,7 @@ else
 			if tmux ls | grep files &>/dev/null; then
 				tmux attach -t files
 			else
-				$SHELL -c 'tmux new-session -s files lf'
+				$SHELL -c 'tmux new-session -s files 'lf;bash''
 			fi
 			;;
 		*)
