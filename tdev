@@ -1,0 +1,21 @@
+#!/bin/bash
+if tmux ls | grep DEV &>/dev/null; then
+	if [ "$cwd" == "" ]; then
+		tmux attach -t DEV:PRG
+	else
+		tmux attach -t DEV:PRG -c "$cwd"
+	fi
+else
+	cwd="$1"
+	if [ "$cwd" == "" ]; then
+		echo "Invalid directory!"
+		exit 1
+	fi
+
+	tmux new-session -d -s DEV -n PRG -c "$cwd" 'vim .; bash'
+	tmux splitw -d -h -p 10 -t DEV:PRG -c "$cwd"
+	tmux splitw -d -v -p 15 -t DEV:PRG.{right} -c "$cwd"
+	#tmux linkw -d -s scratch:0 -t DEV:PRG.{last}
+	tmux new-window -d -n FM -t DEV: 'lf ~/Dev/'
+	tmux -2 attach-session -t DEV
+fi
