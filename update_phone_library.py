@@ -5,13 +5,13 @@ import mimetypes
 from contextlib import closing
 import re
 
-debug = False
+debug = True
 music_path = '{}/Music'.format(os.getenv('HOME'))
-music_phone_path = '{}/Documents/phonemus'.format(os.getenv('HOME'))
+music_phone_path = '/media/InternalHDD/6TB_WD_HDD/phonemus/Music'
 
 def main():
     # COPY NEW MUSIC FROM SRC TO TARGET
-    find_cmd = ['find', music_path, '-type', 'd', '-links', '2', '!', '-empty']
+    find_cmd = ['find', '-L', music_path, '-type', 'd', '-links', '2', '!', '-empty']
     subp = subprocess.Popen(find_cmd, stdout=subprocess.PIPE, encoding='UTF-8', text=True)
     directories = subp.communicate()[0].split('\n')
     target_dirs = []
@@ -38,7 +38,7 @@ def main():
             for x in i[1]:
                 to_be_removed.append("{}/{}".format(i[0], x))
     with closing(open('./update_phone_library_log.txt', "w")) as f:
-        f.write("# THESE FILES DON'T CORRESPOND WITH ANY FILES IN THE SRC DIR, MANUALLY DELETE THEM.")
+        f.write("# THESE FILES DON'T CORRESPOND WITH ANY FILES IN THE SRC DIR, MANUALLY DELETE THEM.\n")
         f.write("\n".join(to_be_removed))
 
 
