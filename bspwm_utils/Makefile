@@ -33,6 +33,6 @@ uninstall:
 	rm -f "$(DESTDIR)$(BINPREFIX)/resize_win"
 
 clean: 	
-	rm -f scratchpad_util $(RESIZE_OBJ) $(SCRATCH_OBJ) $(VALG)
+	rm -f resize_win scratchpad_util $(RESIZE_OBJ) $(SCRATCH_OBJ) $(VALG)
 
 
