@@ -1,5 +1,0 @@
-#!/bin/bash
-flameshot &
-flameshot gui -r -p ~/Pictures/screenshots/ | xclip -sel c -t image/png
-pkill flameshot
-#echo ~/Pictures/screenshots/ | entr -dp pkill flameshot
