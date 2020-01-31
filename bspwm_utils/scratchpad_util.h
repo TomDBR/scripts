@@ -3,7 +3,7 @@
 
 #define DESKTOP_WIDTH 1920
 #define DESKTOP_HEIGHT 1080
-#define CONFIG_FILE "/home/xanadu/.scripts/bspwm_utils/scratch.conf"
+#define CONFIG_FILE "/home/Tom/.scripts/bspwm_utils/scratch.conf"
 #define ID_SIZE 11
 
 typedef struct scratchpad {
