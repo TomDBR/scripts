@@ -1,4 +1,0 @@
-#!/bin/bash
-if (( $# != 1 )); then echo "One argument required!"; exit 1; fi
-file="$@"
-cat "$@" | xclip -sel c

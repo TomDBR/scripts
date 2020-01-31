@@ -1,5 +1,0 @@
-#!/bin/bash
-
-toggle="$@"
-source ~/.bashrc
-queryRemoteServer mpc "$toggle"
