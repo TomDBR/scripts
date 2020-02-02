@@ -3,7 +3,6 @@
 # Set colors for bar / tray
 bgcolor=$(xrdb -query | grep 'URxvt.background' | cut -d":" -f2 | tr -d "\t" | sed 's/\[[0-9][0-9]\]#/#da/')
 fgcolor=$(xrdb -query | grep 'URxvt.foreground' | cut -d":" -f2 | tr -d "\t")
-sed -i "s/^background.*/background \"#${bgcolor#???}\"/" ~/.stalonetrayrc
 
 . lemonbar.conf
 
@@ -242,20 +241,18 @@ Wifi > "$Pipe" &
 Music > "$Pipe" &
 bspc subscribe report > "$Pipe" &
 
+MONITOR_WIDTH="$(xrandr | sed -nE 's/^.*([0-9]{4})x[0-9]+\+[0-9]+\+[0-9]+.*$/\1/p')"
+PANEL_WWIDTH=$(( $MONITOR_WIDTH - 70 ))
 lemonbar.input < "$Pipe" | lemonbar \
 	-f "Font Awesome 5 Free Solid:pixelsize=11:minspace=true:antialias=true" \
 	-f "Misc Ohsnapu:pixelsize=13:antialias=false:minspace=true:spacing=110" \
 	-f "basis33:pixelsize=13:antialias=true" \
 	-f "osaka_unicode:style=Regular:pixelsize=13:antialias=true" \
-	-a 32 -u 2 -n "$PANEL_WM_NAME" -g 1860x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WWIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
 
-stalonetray &
-sleep 0.5 && transset-df -i $(xwininfo -name 'stalonetray' | grep -oE "0x[0-9,a-Z]{3,}" | head -n 1) 0.85 & >/dev/null
-nm-applet &
-blueman-applet &
-fcitx &
+runTray &
+transset-df -i $(xdo id -N stalonetray -m) 0.85
 trap 'pkill stalonetray' INT TERM QUIT EXIT
-#trap 'pkill nm-applet' INT TERM QUIT EXIT
 
 wid=$(xdo id -m -a "$PANEL_WM_NAME")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
