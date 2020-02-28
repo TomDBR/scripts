@@ -58,12 +58,14 @@ void createMissingWindow(scratchpad_t s) {
 	printf("creating missing window..\n");
 	char shellCmd[108];
 	sprintf(shellCmd, "scratch %s", s->name);
-	char *xdoCmd[] = { "xdo", "hide", "-N", "URxvt", "-n", s->name, NULL };
-	process_t p = process(xdoCmd);
-	waitpid(p.pid, NULL, 0);
 	char *trmCmd[] = { "urxvtc", "-name", s->name, "-e", "bash", "-c", shellCmd, NULL };
-	p = process(trmCmd);
-	waitpid(p.pid, NULL, 0);
+	process_t p1 = process(trmCmd);
+	close(p1.fd_write); close(p1.fd_read);
+	char *xdoCmd[] = { "xdo", "hide", "-N", "URxvt", "-n", s->name, "-m", NULL };
+	process_t p2 = process(xdoCmd);
+	close(p2.fd_write); close(p2.fd_read);
+
+	waitpid(p2.pid, NULL, 0);
 }
 
 void addMissingWindows() 
