@@ -49,7 +49,7 @@ Volume() {
 DiskUsage() {
 	while true
 	do
-		hddSize="$(df | grep -e "/dev/sd[a-z][0-9]" | sed "s/  */ /g")"
+		hddSize="$(df | grep -E "/dev/(sd[a-z][0-9]|mapper)" | sed "s/  */ /g")"
 		sizesTotal="$(echo "$hddSize" | cut -d" " -f2)"
 		sizesUsed="$(echo "$hddSize" | cut -d" " -f3)"
 		sizesAvail="$(echo "$hddSize" | cut -d" " -f4)"
