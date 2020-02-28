@@ -10,8 +10,8 @@ else
 			if tmux ls | grep scratch &>/dev/null; then
 				tmux attach -t scratch
 			else
-				tmux new-session -d -s scratch 'gomuks; bash'
-				tmux new-window -d -n MUSIC -t scratch: 'queryRemoteServer.sh ncmpcpp'
+				tmux new-session -d -s scratch -n GOMUKS 'gomuks; bash'
+				tmux new-window -d -n MAIL -t scratch: 'neomutt'
 				tmux new-window -d -n CAL -t scratch: 'calcurse; bash'
 				tmux new-window -d -t scratch:
 				tmux -2 attach-session -t scratch
