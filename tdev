@@ -6,7 +6,7 @@ if tmux ls | grep DEV &>/dev/null; then
 		tmux attach -t DEV:PRG -c "$cwd"
 	fi
 else
-	cwd="$1"
+	cwd="$(pwd)/$1"
 	if [ "$cwd" == "" ]; then
 		echo "Invalid directory!"
 		exit 1
