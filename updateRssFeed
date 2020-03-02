@@ -1,54 +1,65 @@
 #!/bin/bash
 
-curDir=$(pwd)
-feed="$(echo "$1/" | sed 's/\/\/$/\//')"
-dir="/srv/http/rss/$feed"
-echo "Working directory is $dir"
-
 function createNewFeed() {
-	mkdir "$dir"
-	cd "$dir"
-	mkdir videos
+	dir="$1"
+	mkdir -p "${dir}videos"
+	cd "$dir" || exit
 	cp ../emptyFeed.rss feed.rss
-	echo "Please give the channel's url"
-	while read url
+	while read -r -p "Please give the channel's url: " url
 	do
-		if $(echo "$url" | grep "http.*://.*" &>/dev/null); then
+		if echo "$url" | grep "http.*://.*" &>/dev/null; then
 			break
 		else
-			echo "Invalid url, please give a valid url"
+			echo "Invalid URL!"
 		fi
 	done
-
 	echo "$url" > url
+	read -r -p "Please give the video match filter, leave blank for no filter: " filter
+	filter=${filter:-.} # default filter is . (seems to match everything)
+	echo "$filter" > filter
+
 	sed -i "s/{title}/${feed::-1}/;s|{link}|$url|;s/{language}/English/" feed.rss
 	vim feed.rss
-	downloadExistingFeed
+	downloadExistingFeed "$dir"
 }
 
 function downloadExistingFeed() {
-	cd "$dir"
+	dir="$1"
+	echo "Working directory is $dir"
+	cd "$dir" || exit
 	url="$(cat ./url)"
-	declare -a links=( $(youtube-dl -s --get-id --max-downloads 4 "$url" ) )
+	filter="$(cat ./filter)"
+	mapfile -t < <(youtube-dl -s --get-id --match-title "$filter" --max-downloads 4 "$url") links 
 	for link in "${links[@]}"; do
-		populateRssTemplate https://youtu.be/$link /srv/http/rss/rss_item_template.xml ${dir}feed.rss
+		populateRssTemplate "https://youtu.be/$link" /srv/http/rss/rss_item_template.xml "${dir}"feed.rss
 	done
 }
 
-if [[ -d "$dir" ]]; then
-	downloadExistingFeed
-else
-	echo "Feed doesn't exist, do you wanna create it? [Y/n]"
-	while read input
-	do
-		case "$input" in
-			"Y"*|"y"*) createNewFeed; break; ;;
-			"N"*|"n"*) break; exit 1 ;;
-			*) echo -e "Invalid input! \nDo you wanna create the feed? [Y/n]\n"; ;;
-		esac
+curDir=$(pwd)
+rssDir="/srv/http/rss/"
+
+if (( $# == 0 )); then
+	for dir in "${rssDir}"*/; do
+		downloadExistingFeed "$dir"
 	done
+elif (( $# == 1 )); then
+	feed="$(echo "$1/" | sed 's/\/\/$/\//')" # make sure there's a trailing /
+	dir="$rssDir$feed"
+	if [[ -d "$dir" ]]; then
+		downloadExistingFeed "$dir"
+	else
+		echo "Feed doesn't exist, do you want to create it? [Y/n]"
+		while read -r input
+		do
+			case "$input" in
+				"Y"*|"y"*) createNewFeed "$dir"; break; ;;
+				"N"*|"n"*) break; exit 1 ;;
+				*) echo -e "Invalid input! \nDo you want to create the feed? [Y/n]\n"; ;;
+			esac
+		done
+	fi
+else
+	echo -e "Unexpected amount of arguments\nUSAGE: updateRssFeed [name of feed]"
 fi
 
-echo "Exiting..."
-cd $curDir
-
+cd "$curDir"
