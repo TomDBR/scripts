@@ -9,9 +9,7 @@ queryRemoteServer() {
 	args="$@"
 	#echo "program is $program, args is: $args"
 	ssid="$(iw wlp3s0 info | grep ssid | cut -d" " -f2)"
-	if [[   "$ssid" == "FRITZ!Box"    || 
-		"$ssid" == "TP-Link_DOWN" ||
-		"$ssid" == "TP-Link_UP" ]]; then
+	if cat ~/.cache/ssids | grep "$ssid" &>/dev/null; then
 		if ! pgrep mpd &>/dev/null; then
 			if curl --http0.9 http://MJ12:6600 &>/dev/null; then
 				export MPD_PORT=6600
