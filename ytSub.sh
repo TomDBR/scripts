@@ -1,54 +1,34 @@
 #!/bin/bash
+# TODO: flag to toggle whether scraping stops when we hit a video that was already downloaded
 cd ~/Videos/Youtube/Subscriptions
 echo -e "\n$(date) running command..\n"
 
-youtube-dl --add-metadata --dateafter now-1week -i -o AccelJoe/%\(title\)s.%\(ext\)s https://www.youtube.com/channel/UC5o1EJ-fiuhWQlW0Z345SBw &>/home/xanadu/.config/cron/cronYT &
-id=$!
-while kill -0 $id 2>/dev/null
-do 
-	if grep -q "upload date is not in range" /home/xanadu/.config/cron/cronYT
-	then
-		kill $id
-		echo > /home/xanadu/.config/cron/cronYT
-	fi
-done &>/dev/null
-youtube-dl --add-metadata --dateafter now-1week -o Noka/%\(title\)s.%\(ext\)s https://www.youtube.com/channel/UCKfbbsRdWZJGQffxT9IF8qA &>/home/xanadu/.config/cron/cronYT &
-id=$!
-while kill -0 $id 2>/dev/null
-do 
-	if grep -q "upload date is not in range" /home/xanadu/.config/cron/cronYT
-	then
-		kill $id
-		echo > /home/xanadu/.config/cron/cronYT
-	fi
-done &>/dev/null
-youtube-dl --add-metadata --dateafter now-1week -o yoshitoshi\ ABe/%\(title\)s.%\(ext\)s https://www.youtube.com/channel/UCXNsoUix1kehZdBGwuM20pw &>/home/xanadu/.config/cron/cronYT &
-id=$!
-while kill -0 $id 2>/dev/null
-do 
-	if grep -q "upload date is not in range" /home/xanadu/.config/cron/cronYT
-	then
-		kill $id
-		echo > /home/xanadu/.config/cron/cronYT
-	fi
-done &>/dev/null
-
-for i in */
+while read -r line
 do
-        cd "$i"
-        for f in *.mkv
-        do
-                line="/home/xanadu/Videos/Youtube/Subscriptions/$i$f"
-                #echo "$line"
-                if grep -q "$line" /home/xanadu/.config/ranger/tagged
-                then
-                        rm "$f"
-			sed -i "|$line|d" /home/xanadu/.config/ranger/tagged
-                fi
-        done
-        cd ../
-done
-if [[ $PWD == "$HOME/Videos/Youtube/Subscriptions" ]]
-then
-	find . -type d -empty -delete
-fi
+	case "$line" in
+		\#*)
+			# ignore comments
+			;;
+		*)
+			mapfile -t < <(echo $line | tr ' ' '\n') list 
+			[[ ${#list[@]} -eq 2 ]] || continue # ignore line if we didn't have 2 matches
+			youtube-dl --add-metadata --dateafter now-1week -i -o ${list[0]}/%\(title\)s.%\(ext\)s ${list[1]} &>/tmp/ytdl_tmp &
+			id=$!
+			while kill -0 $id 2>/dev/null
+			do 
+				grep -q "upload date is not in range" /tmp/ytdl_tmp || kill $id
+				sleep 1
+			done &>/dev/null
+			;;
+		esac
+done < ~/.cache/ytsubs
+
+# was used to tag videos that could be removed, but nowadays this script is only used for archival purposes, so comment out the next part
+while read -r video
+do
+    grep -q "$video" /home/xanadu/.config/ranger/tagged && rm "$video"
+	sed -i "|$line|d" /home/xanadu/.config/ranger/tagged
+done < <(find ~/Videos/Youtube/Subscriptions -type -f -iname "*.mkv")
+	
+# delete empty directories
+find ~/Videos/Youtube/Subscriptions -type d -empty -delete
