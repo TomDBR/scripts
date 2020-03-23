@@ -11,12 +11,12 @@ style="$(echo "$font_style" | cut -d":" -f2)"
 case "$TERM" in
 	tmux*)  # this doesn't WORK, it does work in screen though
 		sleep .1; 
-		printf '\033P\33]50;%s\007' "xft:$font-$size:$style"
-		printf '\033P\33]711;%s\007' "xft:$font-$size:$style"
+		printf '\033P\33]50;%s\007' "xft:$font:pixelsize=$size:$style"
+		printf '\033P\33]711;%s\007' "xft:$font:pixelsize=$size:$style"
 		;;
 	*)
-		printf '\33]50;%s\007' "xft:$font-$size:$style"
-		printf '\33]711;%s\007' "xft:$font-$size:$style"
+		printf '\33]50;%s\007' "xft:$font:pixelsize=$size:$style"
+		printf '\33]711;%s\007' "xft:$font:pixelsize=$size:$style"
 		;;
 esac
-echo -e "URxvt.font:\txft:$font-$size:$style\nURxvt.boldFont: xft:$font-$size:$style" | xrdb -override
+echo -e "URxvt.font:\txft:$font:pixelsize=$size:$style\nURxvt.boldFont: xft:$font:pixelsize=$size:$style" | xrdb -override
