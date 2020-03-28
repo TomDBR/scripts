@@ -86,5 +86,5 @@ while read -r line ; do
 			esac
 			#echo "${wm}" >> ~/tmp.test
 			#printf "%s\n" "%{l}${wm}"
-			printf "%s\n" "%{l}${wm}  ${title}%{c}${clock}%{r}%{A:queryRemoteServer.sh mpc toggle &>/dev/null:}${music}%{A} ${disk} | ${battery} | ${volume} | ${wifi} | "
+			printf "%s\n" "%{l}${wm}  ${title}%{c}${clock}%{r}%{A:queryRemoteServer.sh mpc toggle &>/dev/null:}${music}%{A} | ${disk} | ${battery} | ${volume} | ${wifi} | "
 done
