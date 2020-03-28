@@ -13,6 +13,7 @@ fi
 
 
 trap 'trap - TERM; kill 0' INT TERM QUIT EXIT
+trap "pkill -P $$" INT TERM QUIT EXIT
 
 # Make a named pipe to send all output from this script to
 
@@ -242,15 +243,15 @@ Wifi() {
 	done
 }
 
-xtitle -t 70 -sf "T%s\n" > "$Pipe" &
-Clock > "$Pipe" &
-#Battery > "$Pipe" &
-Volume > "$Pipe" &
+xtitle -t 50 -sf "T%s\n" > "$Pipe" &
+bspc subscribe report    > "$Pipe" &
+bm_date_mod > "$Pipe" &
+bm_disk_mod > "$Pipe" &
+Battery > "$Pipe" &
+Volume  > "$Pipe" &
 Ethernet > "$Pipe" &
-DiskUsage > "$Pipe" &
-Wifi > "$Pipe" &
-Music > "$Pipe" &
-bspc subscribe report > "$Pipe" &
+#Wifi    > "$Pipe" &
+Music   > "$Pipe" &
 
 MONITOR_WIDTH="$(xrandr | sed -nE 's/^.*([0-9]{4})x[0-9]+\+[0-9]+\+[0-9]+.*$/\1/p')"
 PANEL_WWIDTH=$(( $MONITOR_WIDTH - 70 ))
@@ -259,7 +260,7 @@ lemonbar.input < "$Pipe" | lemonbar \
 	-f "Misc Ohsnapu:pixelsize=13:antialias=false:minspace=true:spacing=110" \
 	-f "basis33:pixelsize=13:antialias=true" \
 	-f "osaka_unicode:style=Regular:pixelsize=13:antialias=true" \
-	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WWIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh &
+	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WWIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh - &
 
 runTray &
 transset-df -i $(xdo id -N stalonetray -m) 0.85
