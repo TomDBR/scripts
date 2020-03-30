@@ -10,6 +10,7 @@ if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
 	printf "%s\\n" "The panel is already running." >&2
 	exit 1
 fi
+. ~/.bashrc
 
 
 trap 'trap - TERM; kill 0' INT TERM QUIT EXIT
@@ -247,7 +248,7 @@ xtitle -t 50 -sf "T%s\n" > "$Pipe" &
 bspc subscribe report    > "$Pipe" &
 bm_date_mod > "$Pipe" &
 bm_disk_mod > "$Pipe" &
-Battery > "$Pipe" &
+#Battery > "$Pipe" &
 Volume  > "$Pipe" &
 Ethernet > "$Pipe" &
 #Wifi    > "$Pipe" &
