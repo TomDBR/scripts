@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for f in *.{mp4,mkv,webm,gif}
+do 
+	ffmpeg -i "$f" -pass 1 -y -vf hqdn3d -c:v libvpx -auto-alt-ref 0 -lag-in-frames 25 -b:v 0 -crf 18 -cpu-used 0 -f webm /dev/null
+	ffmpeg -i "$f" -pass 2 -y -vf hqdn3d -c:v libvpx -auto-alt-ref 0 -lag-in-frames 25 -b:v 0 -crf 18 -cpu-used 0 -f webm output.webm
+done
+
