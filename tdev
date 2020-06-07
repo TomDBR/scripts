@@ -13,9 +13,9 @@ else
 		exit 1
 	fi
 
-	tmux new-session -d -s DEV -n PRG -c "$cwd" 'vim .; bash'
+	tmux new-session -d -s DEV -n PRG -c "$cwd"
 	tmux splitw -d -h -p 10 -t DEV:PRG -c "$cwd"
 	tmux splitw -d -v -p 15 -t DEV:PRG.{right} -c "$cwd"
-	tmux new-window -d -n FM -t DEV: 'lf ~/Dev/'
+	tmux new-window -d -n FM -t DEV: "lf $cwd"
 	tmux -2 attach-session -t DEV
 fi

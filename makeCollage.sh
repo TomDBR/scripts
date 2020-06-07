@@ -1,4 +1,5 @@
 #!/bin/bash
+[[ $# -ne 0 ]] || exit
 former=""
 firstTimestamp="$(echo $1 | sed -E "s/(.*[0-9][0-9]\:[0-9][0-9]\:[0-9][0-9]\.[0-9][0-9][0-9]).jpg/\1/")" # prints the whole filename too so it can be used in the final output file
 lastTimestamp="$(echo "${@: -1}" | sed -E "s/.*([0-9][0-9]\:[0-9][0-9]\:[0-9][0-9]\.[0-9][0-9][0-9]).jpg/\1/")"
