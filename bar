@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Set colors for bar / tray
-bgcolor=$(xrdb -query | grep 'URxvt.background' | cut -d":" -f2 | tr -d "\t" | sed 's/\[[0-9][0-9]\]#/#da/')
-fgcolor=$(xrdb -query | grep 'URxvt.foreground' | cut -d":" -f2 | tr -d "\t")
+bgcolor=$(xrdb -query | grep -E '^(\*|URxvt).background' | cut -d":" -f2 | tr -d "\t") #| sed 's/\[[0-9][0-9]\]#/#da/')
+fgcolor=$(xrdb -query | grep -E '^(\*|URxvt).foreground' | cut -d":" -f2 | tr -d "\t")
+echo "bgcolor: $bgcolor, fgcolor: $fgcolor"
 
 . lemonbar.conf
 
@@ -99,25 +100,30 @@ DiskUsage() {
 
 
 Music() {
-	var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
+	var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
 	curSong="/tmp/curSong.bar"
+	curPID="/tmp/music.pid"
 	size=60
 	buffer="                                                                                             "
 	while true
 	do
 		case "$var" in
 			"")
-				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
+				var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
+				sleep 5
 				;;
 			"mpd error"*)
-				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
+				var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
+				sleep 5
+				continue
 				;;
 			"not connected to"*)
 				var=""
 				sleep 5
 				;;
 			"Terminated"*)
-				var="$(queryRemoteServer mpc -f "%artist%;%title%" current)" 
+				var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
+				continue
 				;;
 		esac
 		if ! [ "$var" == '' ]; then
@@ -132,8 +138,9 @@ Music() {
 				(( scrollingLen = totalLen - size ))
 				(( i=0 ))
 				(( delay=0 )) # Used to prevent text from scrolling out of sight right away, improves readability
-				queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+				queryRemoteServer.sh mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 				pidmpc=$!
+				echo "$pidmpc" > "$curPID"
 				while kill -0 $pidmpc 2> /dev/null
 				do
 					#if the artistlength is greater than the title, scroll the whole thing
@@ -169,8 +176,9 @@ Music() {
 				done
 				var="$(cat $curSong)"
 			else
-				queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 &
+				queryRemoteServer.sh mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 &
 				pidmpc=$!
+				echo "$pidmpc" > "$curPID"
 				echo -e "M| \\uf001 $artist - $title"
 				while kill -0 $pidmpc 2> /dev/null
 				do
@@ -180,8 +188,9 @@ Music() {
 			fi
 		else
 			echo "M"
-			queryRemoteServer mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
+			queryRemoteServer.sh mpc -f "%artist%;%title%" current --wait > $curSong 2>&1 & 
 			pidmpc=$!
+			echo "$pidmpc" > "$curPID"
 			while kill -0 $pidmpc 2> /dev/null
 			do
 				wait
@@ -253,7 +262,7 @@ Volume  > "$Pipe" &
 Wifi    > "$Pipe" &
 Music   > "$Pipe" &
 
-MONITOR_WIDTH="$(xrandr | sed -nE 's/^.*([0-9]{4})x[0-9]+\+[0-9]+\+[0-9]+.*$/\1/p')"
+MONITOR_WIDTH="$(xrandr | grep primary | sed -nE 's/^.*([0-9]{4})x[0-9]+\+[0-9]+\+[0-9]+.*$/\1/p')"
 PANEL_WWIDTH=$(( $MONITOR_WIDTH - 70 ))
 lemonbar.input < "$Pipe" | lemonbar \
 	-f "Font Awesome 5 Free Solid:pixelsize=11:minspace=true:antialias=true" \
@@ -263,7 +272,7 @@ lemonbar.input < "$Pipe" | lemonbar \
 	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WWIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh - &
 
 runTray &
-transset-df -i $(xdo id -N stalonetray -m) 0.85
+[ grep -q 'URxvt\*background' <(xrdb -query) ] && transset-df -i $(xdo id -N stalonetray -m) 0.85
 trap 'pkill stalonetray' INT TERM QUIT EXIT
 
 wid=$(xdo id -m -a "$PANEL_WM_NAME")
