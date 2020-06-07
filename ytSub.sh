@@ -1,7 +1,7 @@
 #!/bin/bash
 scrapeAll=( 0 )
 directory="$PWD"
-while getopts ":a:d" opt; do
+while getopts ":ad:" opt; do
     case "${opt}" in
         a)
 			scrapeAll=( 1 )
@@ -18,7 +18,7 @@ while getopts ":a:d" opt; do
     esac
 done
 
-cd "$directory" || echo "Directory not found!" && exit
+cd "$directory" || (echo "Directory not found!" && exit)
 echo -e "\n$(date):\t Begin scraping.\n"
 
 while read -r line
