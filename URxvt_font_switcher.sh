@@ -12,11 +12,11 @@ case "$TERM" in
 	tmux*)  # this doesn't WORK, it does work in screen though
 		sleep .1; 
 		printf '\033P\33]50;%s\007' "xft:$font:pixelsize=$size:$style"
-		printf '\033P\33]711;%s\007' "xft:$font:pixelsize=$size:$style"
+		printf '\033P\33]711;%s\007' "xft:$font:pixelsize=$size:style=Bold"
 		;;
 	*)
 		printf '\33]50;%s\007' "xft:$font:pixelsize=$size:$style"
-		printf '\33]711;%s\007' "xft:$font:pixelsize=$size:$style"
+		printf '\33]711;%s\007' "xft:$font:pixelsize=$size:style=Bold"
 		;;
 esac
-echo -e "URxvt.font:\txft:$font:pixelsize=$size:$style\nURxvt.boldFont: xft:$font:pixelsize=$size:$style" | xrdb -override
+echo -e "URxvt.font:\txft:$font:pixelsize=$size:$style\nURxvt.boldFont: xft:$font:pixelsize=$size:style=Bold" | xrdb -override
