@@ -48,55 +48,6 @@ Volume() {
 	done
 }
 
-DiskUsage() {
-	while true
-	do
-		hddSize="$(df | grep -E "/dev/(sd[a-z][0-9]|mapper)" | sed "s/  */ /g")"
-		sizesTotal="$(echo "$hddSize" | cut -d" " -f2)"
-		sizesUsed="$(echo "$hddSize" | cut -d" " -f3)"
-		sizesAvail="$(echo "$hddSize" | cut -d" " -f4)"
-		sizeTotalArray=( $sizesTotal )
-		sizeUsedArray=( $sizesUsed )
-		sizeAvailArray=( $sizesAvail )
-		sumTotal="0"
-		sumUsed="0"
-		sumAvail="0"
-		(( lengthArray="${#sizeUsedArray[@]}" ))
-		(( i = 0 ))
-		while (( i < "$lengthArray" ))
-		do
-			sumTotal="$(echo "${sizeTotalArray[$i]} + $sumTotal" | bc)"
-			sumUsed="$(echo "${sizeUsedArray[$i]} + $sumUsed" | bc)"
-			sumAvail="$(echo "${sizeAvailArray[$i]} + $sumAvail" | bc)"
-			(( i++ ))
-		done
-		if (( ${#sumTotal} > 9 )); then
-			sumTotal="$(echo "scale=2; $sumTotal / 1024 / 1024 / 1024" | bc -l)TB"
-		elif (( ${#sumTotal} > 6 )); then
-			sumTotal="$(echo "scale=2; $sumTotal / 1024 / 1024" | bc -l)GB"
-		elif (( ${#sumTotal} > 3 )); then
-			sumTotal="$(echo "scale=2; $sumTotal / 1024" | bc -l)MB"
-		fi
-		if (( ${#sumUsed} > 9 )); then
-			sumUsed="$(echo "scale=2; $sumUsed / 1024 / 1024 / 1024" | bc -l)TB"
-		elif (( ${#sumUsed} > 6 )); then
-			sumUsed="$(echo "scale=2; $sumUsed / 1024 / 1024" | bc -l)GB"
-		elif (( ${#sumTotal} > 3 )); then
-			sumUsed="$(echo "scale=2; $sumUsed / 1024" | bc -l)MB"
-		fi
-		if (( ${#sumAvail} > 9 )); then
-			sumAvail="$(echo "scale=2; $sumAvail / 1024 / 1024 / 1024" | bc -l)TB"
-		elif (( ${#sumTotal} > 6 )); then
-			sumAvail="$(echo "scale=2; $sumAvail / 1024 / 1024" | bc -l)GB"
-		elif (( ${#sumTotal} > 3 )); then
-			sumAvail="$(echo "scale=2; $sumAvail / 1024" | bc -l)MB"
-		fi
-		#echo  -e "D| \\uf0c7 ${sumUsed}/${sumTotal}; ${sumAvail} left"
-		echo  -e "D| \\uf0c7 ${sumAvail} free"
-
-		sleep 300
-	done
-}
 
 
 Music() {
@@ -256,9 +207,9 @@ xtitle -t 50 -sf "T%s\n" > "$Pipe" &
 bspc subscribe report    > "$Pipe" &
 bm_date_mod > "$Pipe" &
 bm_disk_mod > "$Pipe" &
-Battery > "$Pipe" &
+[[ command -v acpi ]] && Battery > "$Pipe" &
 Volume  > "$Pipe" &
-#Ethernet > "$Pipe" &
+Ethernet > "$Pipe" &
 Wifi    > "$Pipe" &
 Music   > "$Pipe" &
 
