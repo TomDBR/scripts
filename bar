@@ -48,9 +48,6 @@ Volume() {
 	done
 }
 
-<<<<<<< HEAD
-
-
 Music() {
 	var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
 	curSong="/tmp/curSong.bar"
@@ -208,7 +205,7 @@ xtitle -t 50 -sf "T%s\n" > "$Pipe" &
 bspc subscribe report    > "$Pipe" &
 bm_date_mod > "$Pipe" &
 bm_disk_mod > "$Pipe" &
-[[ command -v acpi ]] && Battery > "$Pipe" &
+command -v acpi && Battery > "$Pipe" &
 Volume  > "$Pipe" &
 Ethernet > "$Pipe" &
 Wifi    > "$Pipe" &
@@ -224,7 +221,7 @@ lemonbar.input < "$Pipe" | lemonbar \
 	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WWIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh - &
 
 runTray &
-[ grep -q 'URxvt\*background' <(xrdb -query) ] && transset-df -i $(xdo id -N stalonetray -m) 0.85
+grep -q 'URxvt\*background' <(xrdb -query) && transset-df -i $(xdo id -N stalonetray -m) 0.85
 trap 'pkill stalonetray' INT TERM QUIT EXIT
 
 wid=$(xdo id -m -a "$PANEL_WM_NAME")
