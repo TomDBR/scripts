@@ -5,7 +5,7 @@ import mimetypes
 from contextlib import closing
 import re
 
-debug = False
+debug = True
 music_path = '{}/Music'.format(os.getenv('HOME'))
 music_phone_path = '/media/InternalHDD/6TB_WD_HDD/phonemus/Music'
 
