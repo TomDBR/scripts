@@ -205,10 +205,10 @@ xtitle -t 50 -sf "T%s\n" > "$Pipe" &
 bspc subscribe report    > "$Pipe" &
 bm_date_mod > "$Pipe" &
 bm_disk_mod > "$Pipe" &
+bm_ip_mod 	> "$Pipe" &
 command -v acpi && Battery > "$Pipe" &
 Volume  > "$Pipe" &
-Ethernet > "$Pipe" &
-Wifi    > "$Pipe" &
+
 Music   > "$Pipe" &
 
 MONITOR_WIDTH="$(xrandr | grep primary | sed -nE 's/^.*([0-9]{4})x[0-9]+\+[0-9]+\+[0-9]+.*$/\1/p')"
