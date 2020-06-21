@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Set colors for bar / tray
 bgcolor=$(xrdb -query | grep -E '^(\*|URxvt).background' | cut -d":" -f2 | tr -d "\t") #| sed 's/\[[0-9][0-9]\]#/#da/')
 fgcolor=$(xrdb -query | grep -E '^(\*|URxvt).foreground' | cut -d":" -f2 | tr -d "\t")
@@ -13,18 +12,11 @@ if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
 fi
 . ~/.bashrc
 
-trap 'trap - TERM; kill 0' INT TERM QUIT EXIT
-trap "pkill -P $$" INT TERM QUIT EXIT
-
 # Make a named pipe to send all output from this script to
 
 Pipe="/tmp/mybar.info"
 [ -e "$Pipe" ] && rm "$Pipe"
 mkfifo "$Pipe"
-
-trap 'rm "$Pipe"' INT TERM QUIT EXIT
-
-
 
 Volume() {
 	while true
@@ -149,17 +141,6 @@ Music() {
 	done
 }
 
-# Define the clock
-Clock() {
-	while true
-	do
-        	DATETIME=$(date "+%a %d/%m - %H:%M")
-        	#echo -e "S\\uf073 ${DATETIME}\n"
-        	echo -e "S${DATETIME}\n"
-		sleep 60
-	done
-}
-
 Battery() {
 	while true
 	do
@@ -172,32 +153,6 @@ Battery() {
 		else echo -e "B\\uf244 $BATPRC\n"; fi
 		echo -e "B\\uf242 $BATPRC\n"
 		sleep 30
-	done
-}
-
-Ethernet() {
-	while true
-	do
-		ETH=$(ip -4 addr | grep enp4s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
-		if [ -z "$ETH" ]; then
-			echo -e "IEth: NULL\\n"
-		else
-			echo -e "IEth: $ETH\\n"
-		fi
-		sleep 10
-	done
-}
-
-Wifi() {
-	while true
-	do
-		WIFI=$(ip -4 addr | grep wlp3s0 | grep -oE "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | head -n 1)
-		if [ -z "$WIFI" ]; then
-			echo -e "X\\uf1eb NULL"
-		else
-			echo -e "X\\uf1eb $WIFI"
-		fi
-		sleep 10
 	done
 }
 
@@ -228,5 +183,7 @@ wid=$(xdo id -m -a "$PANEL_WM_NAME")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
 wid=$(xdo id -m -a "stalonetray")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
+
+trap 'trap - TERM; kill 0' 0 2 9 15
 
 wait
