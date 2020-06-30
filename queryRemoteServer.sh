@@ -17,7 +17,7 @@ queryRemoteServer() {
 	pgrep mpd &>/dev/null || HOST_NAME="MJ12"
 	curl -s http://"$HOST_NAME":"$MPD_PORT" &>/dev/null || export MPD_PORT=6605
 		
-	/usr/bin/"$program" -h "$HOST_NAME" -p "$MPD_PORT" "$args"
+	/usr/bin/"$program" -h "$HOST_NAME" -p "$MPD_PORT" $args
 }
 
 queryRemoteServer "$@"
