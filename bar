@@ -1,19 +1,17 @@
 #!/bin/bash
 # Set colors for bar / tray
-bgcolor=$(xrdb -query | grep -E '^(\*|URxvt).background' | cut -d":" -f2 | tr -d "\t") #| sed 's/\[[0-9][0-9]\]#/#da/')
-fgcolor=$(xrdb -query | grep -E '^(\*|URxvt).foreground' | cut -d":" -f2 | tr -d "\t")
+bgcolor=$(xrdb -query | grep -E '^(URxvt|\*)(\*|\.)background' | sed -E "s/\[?[0-9]{0,3}\]?#/#/" | cut -d":" -f2 | tr -d "\t") #| sed 's/\[[0-9][0-9]\]#/#da/')
+fgcolor=$(xrdb -query | grep -E '^(URxvt|\*)(\*|\.)foreground' | cut -d":" -f2 | tr -d "\t")
 echo "bgcolor: $bgcolor, fgcolor: $fgcolor"
 
 . lemonbar.conf
-
 if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
 	printf "%s\\n" "The panel is already running." >&2
 	exit 1
 fi
-. ~/.bashrc
+source ~/.bashrc # runTray command won't work otherwise
 
 # Make a named pipe to send all output from this script to
-
 Pipe="/tmp/mybar.info"
 [ -e "$Pipe" ] && rm "$Pipe"
 mkfifo "$Pipe"
@@ -22,7 +20,7 @@ Volume() {
 	while true
 	do
 		controls=$(pactl list sinks)
-		vol=$(echo "$controls" | grep -e "Volume:" | grep -v "Base" | grep -oe "[0-9][0-9]*%" | head -n 1)
+		vol=$(echo "$controls" | grep -e "Volume:" | grep -v "Base" | grep -oE "[0-9][0-9]*%" | head -n 1)
 		mute=$(echo "$controls" | grep "Mute" | tr -d "\t " | cut -d":" -f2 | head -n 1)
 		i="${vol::-1}" # removes last character of string
 		if [[ "$mute" = 'no' ]]; then
@@ -163,27 +161,26 @@ bm_disk_mod > "$Pipe" &
 bm_ip_mod 	> "$Pipe" &
 command -v acpi && Battery > "$Pipe" &
 Volume  > "$Pipe" &
-
 Music   > "$Pipe" &
 
 MONITOR_WIDTH="$(xrandr | grep primary | sed -nE 's/^.*([0-9]{4})x[0-9]+\+[0-9]+\+[0-9]+.*$/\1/p')"
-PANEL_WWIDTH=$(( $MONITOR_WIDTH - 70 ))
+PANEL_WIDTH=$(( $MONITOR_WIDTH - 70 ))
 lemonbar.input < "$Pipe" | lemonbar \
 	-f "Font Awesome 5 Free Solid:pixelsize=11:minspace=true:antialias=true" \
 	-f "Misc Ohsnapu:pixelsize=13:antialias=false:minspace=true:spacing=110" \
 	-f "basis33:pixelsize=13:antialias=true" \
 	-f "osaka_unicode:style=Regular:pixelsize=13:antialias=true" \
-	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WWIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh - &
+	-a 32 -u 2 -n "$PANEL_WM_NAME" -g ${PANEL_WIDTH}x$PANEL_HEIGHT -F "$fgcolor" -B "$bgcolor" | sh - &
 
+pgrep stalonetray &>/dev/null && pkill -9 stalonetray # it often doesn't actually exit with a SIGTERM so we use SIGKILL
 runTray &
-grep -q 'URxvt\*background' <(xrdb -query) && transset-df -i $(xdo id -N stalonetray -m) 0.85
-trap 'pkill stalonetray' INT TERM QUIT EXIT
+grep -q 'URxvt\*background' <(xrdb -query) && transset-df -i $(xdo id -N stalonetray -m) 0.85 &>/dev/null
 
 wid=$(xdo id -m -a "$PANEL_WM_NAME")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
 wid=$(xdo id -m -a "stalonetray")
 xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" "$wid"
 
-trap 'trap - TERM; kill 0' 0 2 9 15
+trap "kill -TERM $(jobs -p | tr '\n' ' ')" 0 2 9 15
 
 wait
