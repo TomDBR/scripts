@@ -10,20 +10,20 @@ else
 			if tmux ls | grep scratch &>/dev/null; then
 				tmux -2 attach -t scratch
 			else
+				tmux new-session -d -s scratch -n GOMUKS 'gomuks; bash'
+				tmux new-window -d -n MAIL -t scratch: 'neomutt; bash'
+				tmux new-window -d -n CAL -t scratch: 'calcurse; bash'
 				if grep -q MJ12 /etc/hostname; then
 					running="$(sudo lxc-ls --fancy | grep RUNNING | cut -d" " -f1)"
 					if [[ -z "$running" ]]; then
-						tmux new-session -d -s scratch -n VPN 'sudo lxc-start -n vpn; bash'
+						tmux new-window -d -t scratch -n SHELL 'sudo lxc-start -n vpn; bash'
 					else
-						tmux new-session -d -s scratch -n VPN 'bash'
+						tmux new-window -d -t scratch -n SHELL 'bash'
 					fi
-					tmux new-window -d -n BLUETOOTH -t scratch 'bluetoothctl'
+					tmux splitw -d -v -t scratch:SHELL 'bluetoothctl'
 				else
-					tmux new-session -d -s scratch -n GOMUKS 'gomuks; bash'
-					tmux new-window -d -n MAIL -t scratch: 'neomutt'
-					tmux new-window -d -n CAL -t scratch: 'calcurse; bash'
+					tmux new-window -d -t scratch 'bash'
 				fi
-				tmux new-window -d -t scratch
 				tmux -2 attach-session -t scratch
 			fi
 			;;
