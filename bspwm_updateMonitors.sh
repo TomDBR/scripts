@@ -80,4 +80,4 @@ for monitor in "${!monitor_status[@]}"; do
 	(( iter++ ))
 done
 
-pkill bar;  nohup bar &>/home/Tom/bar &
+pkill bar;  nohup bar &
