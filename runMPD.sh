@@ -1,7 +1,7 @@
 #!/bin/sh
 # Toggle between the 2 MPD libraries, change port accordingly
 
-pgrep mpd || pkill mpd
+pgrep mpd && pkill mpd
 [ -f /tmp/mpd.fifo ] && rm /tmp/mpd.fifo
 
 echo "Changing MPD_HOST variable"
