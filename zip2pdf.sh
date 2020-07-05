@@ -1,6 +1,12 @@
 #!/bin/bash
 # manga2pdf.sh: shell script to convert zipped manga chapters to pdf files
 # usage: ./manga2pdf.sh <path to manga folder>
+
+if ! command -v img2pdf; then
+	echo "Install img2pdf before using this script!"
+	return 1
+fi
+
 manga=`echo $@"/" | sed 's/\/\/$/\//g'`
 echo "Mangafolder is $manga"
 shopt -s extglob
