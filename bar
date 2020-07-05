@@ -51,7 +51,7 @@ Music() {
 				var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
 				sleep 5
 				;;
-			"mpd error"*)
+			"MPD error"*)
 				var="$(queryRemoteServer.sh mpc -f "%artist%;%title%" current)" 
 				sleep 5
 				continue
