@@ -11,7 +11,7 @@ else
 				tmux -2 attach -t scratch
 			else
 				tmux new-session -d -s scratch -n GOMUKS 'gomuks; bash'
-				tmux new-window -d -n MAIL -t scratch: 'neomutt; bash'
+				tmux new-window -d -n MAIL -t scratch: 'bash -c "source ~/.bashrc; neomutt; bash"'
 				tmux new-window -d -n CAL -t scratch: 'calcurse; bash'
 				if grep -q MJ12 /etc/hostname; then
 					running="$(sudo lxc-ls --fancy | grep RUNNING | cut -d" " -f1)"
