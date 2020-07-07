@@ -66,11 +66,13 @@ done
 
 echo "xrandr cmd is: $cmd"
 $cmd
+for monitor in "${!monitor_status[@]}"; do
+	[[ ${monitor_status["$monitor"]} == "disconnected" ]] && unset monitor_status[$monitor]
+done
 wspacePerMon=$(( ${#wspaceNameArr[@]} / ${#monitor_status[@]} )) # no idea what happens if this is a floating point ;3
 
 let iter=0
 for monitor in "${!monitor_status[@]}"; do
-	[[ ${monitor_status["$monitor"]} == "disconnected" ]] && continue
 	if (( iter == 0 )); then
 		wspaces="$(echo $workspaceNames | cut -d" " -f$(seq -s , $(( (iter+1) * $wspacePerMon)) ))"
 	else
@@ -80,4 +82,4 @@ for monitor in "${!monitor_status[@]}"; do
 	(( iter++ ))
 done
 
-pkill bar;  nohup bar &
+pkill bar; bar &
