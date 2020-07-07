@@ -6,7 +6,8 @@ queryRemoteServer() {
 	args="$*"
 	# TODO multiple tun devices? probably unlikely
 	tun="$(ip tuntap list 2>/dev/null | cut -d':' -f1 | head -n 1)"
-	gw="$(ip route show default | grep -v $tun | cut -d " " -f3)"
+	[[ -z "$tun" ]] && tun="tun" # gotta have something to inverse match with grep
+	gw="$(ip route show default | grep -v "$tun" | cut -d " " -f3)"
 	MAC="$(ip neigh | grep "$gw" | cut -d" " -f5)"
 	HOST_NAME='localhost'
 	MPD_PORT=6600
@@ -18,7 +19,11 @@ queryRemoteServer() {
 		echo "not connected to home network, aborting..." && return 1
 	fi
 	pgrep mpd &>/dev/null || HOST_NAME="MJ12"
-	curl -s http://"$HOST_NAME":"$MPD_PORT" &>/dev/null || MPD_PORT=6605
+	if grep -q "http0.9" <(curl --help); then
+		curl -s --http0.9 http://"$HOST_NAME":"$MPD_PORT" &>/dev/null || MPD_PORT=6605
+	else
+		curl -s http://"$HOST_NAME":"$MPD_PORT" &>/dev/null || MPD_PORT=6605
+	fi
 		
 	/usr/bin/"$program" -h "$HOST_NAME" -p "$MPD_PORT" $args
 }
