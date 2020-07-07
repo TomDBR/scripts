@@ -1,8 +1,8 @@
 #!/bin/bash
 # Set colors for bar / tray
-bgcolor=$(xrdb -query | grep -E '^(URxvt|\*)(\*|\.)background' | sed -E "s/\[?[0-9]{0,3}\]?#/#/" | cut -d":" -f2 | tr -d "\t") #| sed 's/\[[0-9][0-9]\]#/#da/')
-fgcolor=$(xrdb -query | grep -E '^(URxvt|\*)(\*|\.)foreground' | cut -d":" -f2 | tr -d "\t")
-echo "bgcolor: $bgcolor, fgcolor: $fgcolor"
+bgcolor=$(xrdb -query | grep -E '^(URxvt|\*)(\*|\.)background' | head -n 1 | sed -E "s/\[?[0-9]{0,3}\]?#/#/" | cut -d":" -f2 | tr -d "\t") #| sed 's/\[[0-9][0-9]\]#/#da/')
+fgcolor=$(xrdb -query | grep -E '^(URxvt|\*)(\*|\.)foreground' | head -n 1 | cut -d":" -f2 | tr -d "\t")
+#echo "bgcolor: $bgcolor, fgcolor: $fgcolor"
 
 . lemonbar.conf
 if xdo id -a "$PANEL_WM_NAME" > /dev/null ; then
