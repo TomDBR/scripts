@@ -8,21 +8,25 @@ import os
 
 usage = "./scrapeThread.py [thread] [location] (-t [ext(,ext)])"
 def_type = ['png', 'jpg', 'webm', 'gif']
+dbg_val = True
 
 def main():
     if len(sys.argv) < 3:
         die("Expected at least 2 arguments!\n{}".format(usage))
     url = sys.argv[1]
     location = sys.argv[2]
+    types = sys.argv[5].split(',') if len(sys.argv) == 5 else def_type
+    scrapeThread(url, location, types)
+
+def scrapeThread(thread, location, types):
     if not os.path.exists(location):
             os.mkdir(location)
-    types = sys.argv[5].split(',') if len(sys.argv) == 5 else def_type
     regex = r'^https?://boards\.4chann?e?l?\.org\/[\w]+\/thread\/\d+$'
-    if not re.match(regex, url):
-        die("unsupported URL!")
+    if not re.match(regex, thread):
+        die(f"unsupported URL! {thread}")
     if os.path.isdir(location) is None:
-        die("invalid path URL!")
-    html = get_formatted_html(url)
+        die(f"invalid path URL! {location}")
+    html = get_formatted_html(thread)
     if html is None:
         die("scraping URL failed!")
     files = []
@@ -33,11 +37,11 @@ def main():
             name = reg.group(1)
             ext = reg.group(2)
             if ext in types:
-                path = "{}/{}.{}".format(location, name, ext)
+                path = f"{location}/{name}.{ext}"
                 if os.access(path, os.W_OK):
-                    print("File ({}) exists, skipping".format(path))
+                    debug(f"File ({path}) exists, skipping")
                 else:
-                    print("Downloading {}".format(file_url))
+                    debug(f"Downloading {file_url} to {path}")
                     data = get_file(file_url)
                     files.append((data, path))
     if files is None:
@@ -52,6 +56,9 @@ def die(msg):
     print(msg, file=sys.stderr)
     quit()
 
+def debug(msg): 
+    if dbg_val is True:
+        print(msg)
 
 if __name__ == "__main__":
     main()
