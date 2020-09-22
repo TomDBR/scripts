@@ -1,17 +1,23 @@
 #!/bin/bash
 # TODO: allow choice of primary monitor
 # TODO: custom monitor position
+
 workspaceNames="I II III IV V VI VII VIII IX X" # needs to be separated by spaces!
 wspaceNameArr=( $(echo $workspaceNames | tr " " "\n") )
 cmd="xrandr"
 declare -A monitor_status
 declare -A monitor_settings
-monitor_settings['LVDS-1']="--output LVDS-1 --mode 1920x1080 --pos 2560x0 --rotate normal" #main monitor, settings can be hardcoded
 
 function querySettings() {
-	xD="$1"
-	mode="$(xrandr --query | awk "/$xD/{p=1;next;print} p&&/^[^ ]/{p=0};p" | sed 's/ *//' | cut -d" " -f1 | rofi -dmenu)"
-	monitor_settings["$xD"]="--output "$xD" --primary --mode "$mode" --pos 0x0 --rotate normal"
+	monitor="$1"
+	mode="$(xrandr --query | awk "/$monitor/{p=1;next;print} p&&/^[^ ]/{p=0};p" | sed 's/ *//' | cut -d" " -f1 | rofi -dmenu)"
+	monitorOpts="--output "$monitor" --primary --mode "$mode" --pos 0x0 --rotate normal"
+	monitor_settings["$monitor"]="$monitorOpts"
+	if grep -q "$xD" ~/.cache/bspwm_monitorCache; then
+		sed -Ei "s/($xD) .*$/\1 $monitorOpts/" ~/.cache/bspwm_monitorCache
+	else 
+		echo "$monitor $monitorOpts" >> ~/.cache/bspwm_monitorCache
+	fi
 }
 
 while read status; do
@@ -20,7 +26,7 @@ done < <(xrandr | grep connected | cut -d" " -f1,2)
 
 opt_monitor=""
 opt_settings=""
-while getopts "m:s:" opt; do
+while getopts "m:s:c" opt; do
 	case "$opt" in
 		m)
 			for i in "${!monitor_status[@]}"; do
@@ -41,8 +47,16 @@ while getopts "m:s:" opt; do
 				opt_settings="$OPTARG"
 			fi
 			;;
+        c)
+			while read monName monOpts; do
+				monitor_settings["$monName"]="--output $monName $monOpts"
+			done < ~/.cache/bspwm_monitorCache
+			;;
 		*)
-			echo "Invalid option!" ;;
+            echo -e "USAGE: bspwm_updateMonitors.sh [-c] [-m monitorName -s monitorOptions]\n \
+	-c:\t Use the cached values in ~/.cache/bspwm_monitorCache"
+			exit
+			;;
 	esac
 done
 
