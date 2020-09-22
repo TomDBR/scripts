@@ -7,7 +7,7 @@ import re
 
 debug = True
 music_path = '{}/Music'.format(os.getenv('HOME'))
-music_phone_path = '/media/InternalHDD/6TB_WD_HDD/phonemus/Music'
+music_phone_path = '/media/InternalHDD/4TB_WD_HDD/phonemus/Music'
 
 def main():
     # COPY NEW MUSIC FROM SRC TO TARGET
@@ -92,14 +92,16 @@ def update_target_dir(src_dir, target_dir):
 
 
 def convertToOpus(song):
-        ffmpeg_cmd = [ 'ffmpeg', '-i', song, '-ar', '48000', '-ac', '2', '-acodec', 'libopus', '-ab', '128k', '-vbr', 'on', '-f', 'opus', '-loglevel', 'error', '-' ]
-        ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        song, stderr = ffmpeg_proc.communicate()
-        if ffmpeg_proc.returncode == 0:
-            return song
-        else:
-            print("ERROR CODE: {}. {}".format(ffmpeg_proc.returncode, stderr.decode("utf-8")))
-            return None
+    print("in here")
+    ffmpeg_cmd = [ 'ffmpeg', '-i', song, '-ar', '48000', '-ac', '2', '-acodec', 'libopus', '-ab', '128k', '-vbr', 'on', '-f', 'opus', '-loglevel', 'error', '-' ]
+    ffmpeg_proc = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    song, stderr = ffmpeg_proc.communicate()
+    if ffmpeg_proc.returncode == 0:
+        return song
+    else:
+        print("ERROR CODE: {}. {}".format(ffmpeg_proc.returncode, stderr.decode("utf-8")))
+        return None
+
 def log_debug(msg):
     if debug:
         print(msg)
