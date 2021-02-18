@@ -19,11 +19,7 @@ queryRemoteServer() {
 		echo "not connected to home network, aborting..." && return 1
 	fi
 	pgrep mpd &>/dev/null || HOST_NAME="MJ12"
-	if grep -q "http0.9" <(curl --help); then
-		curl -s --http0.9 http://"$HOST_NAME":"$MPD_PORT" &>/dev/null || MPD_PORT=6605
-	else
-		curl -s http://"$HOST_NAME":"$MPD_PORT" &>/dev/null || MPD_PORT=6605
-	fi
+	echo "close" | nc "$HOST_NAME" "$MPD_PORT" &>/dev/null || MPD_PORT=6605
 		
 	/usr/bin/"$program" -h "$HOST_NAME" -p "$MPD_PORT" $args
 }
