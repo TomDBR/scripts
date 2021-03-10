@@ -2,19 +2,19 @@
 
 cmd="$@"
 vol="$(pactl list sinks | grep -e "Volume:" | grep -v "Base" | grep -oe "[0-9][0-9]*%" | head -n 1)"
-echo "$vol"
+default_sink="$(pactl info | grep -oP '(?<=Default Sink: ).*')"
 
 if [[ "$cmd" = "toggle" ]]
 then
-	pactl set-sink-mute 0 toggle
+	pactl set-sink-mute "$default_sink" toggle
 elif [[ "$cmd" = "down" ]]
 then
-	pactl set-sink-volume 0 -5%
+	pactl set-sink-volume "$default_sink" -5%
 elif [[ "$cmd" = "up" ]]
 then
 	if (( ${vol::-1} > 95 )); then
-		pactl set-sink-volume 0 +$(( 100 - ${vol::-1} ))%
+		pactl set-sink-volume "$default_sink" +$(( 100 - ${vol::-1} ))%
 	else
-		pactl set-sink-volume 0 +5%
+		pactl set-sink-volume "$default_sink" +5%
 	fi
 fi
